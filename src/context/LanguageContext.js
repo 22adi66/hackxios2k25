@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { translations, availableLanguages } from '@/lib/translations';
 
 const LanguageContext = createContext();
@@ -8,6 +8,50 @@ const LanguageContext = createContext();
 export function LanguageProvider({ children }) {
   const [language, setLanguage] = useState('en');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const voicesLoadedRef = useRef(false);
+
+  // Language to speech synthesis mapping
+  const langMap = {
+    en: ['en-US', 'en-GB', 'en-IN', 'en'],
+    hi: ['hi-IN', 'hi'],
+    pa: ['pa-IN', 'pa', 'hi-IN'], // Fallback to Hindi if Punjabi not available
+    te: ['te-IN', 'te'],
+    ta: ['ta-IN', 'ta'],
+    kn: ['kn-IN', 'kn']
+  };
+
+  // Load voices
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const checkSpeechSupport = () => {
+      setIsSpeechSupported('speechSynthesis' in window);
+    };
+    
+    checkSpeechSupport();
+    
+    if ('speechSynthesis' in window) {
+      const loadVoices = () => {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          setAvailableVoices(voices);
+          voicesLoadedRef.current = true;
+        }
+      };
+
+      // Load voices immediately if available
+      loadVoices();
+      
+      // Also listen for voiceschanged event (Chrome loads voices async)
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      
+      return () => {
+        window.speechSynthesis.onvoiceschanged = null;
+      };
+    }
+  }, []);
 
   // Load saved language preference on mount
   useEffect(() => {
@@ -65,44 +109,68 @@ export function LanguageProvider({ children }) {
     return value || key;
   }, [language]);
 
+  // Find best matching voice for a language
+  const findVoice = useCallback((langCode) => {
+    const voices = availableVoices.length > 0 ? availableVoices : window.speechSynthesis?.getVoices() || [];
+    const langOptions = langMap[langCode] || ['en-US'];
+    
+    // Try each language option in order
+    for (const lang of langOptions) {
+      // Exact match
+      const exactMatch = voices.find(v => v.lang === lang);
+      if (exactMatch) return exactMatch;
+      
+      // Partial match (e.g., 'hi' matches 'hi-IN')
+      const partialMatch = voices.find(v => v.lang.startsWith(lang.split('-')[0]));
+      if (partialMatch) return partialMatch;
+    }
+    
+    // Fallback to first English voice or any available voice
+    return voices.find(v => v.lang.startsWith('en')) || voices[0] || null;
+  }, [availableVoices]);
+
   // Voice synthesis for multilingual alerts
   const speak = useCallback((text, options = {}) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) {
-      return;
+    if (typeof window === 'undefined' || !window.speechSynthesis || !text) {
+      console.log('Speech synthesis not available');
+      return false;
     }
 
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
+    try {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Map language codes to speech synthesis language codes
-    const langMap = {
-      en: 'en-US',
-      hi: 'hi-IN',
-      pa: 'pa-IN',
-      te: 'te-IN',
-      ta: 'ta-IN',
-      kn: 'kn-IN'
-    };
-    
-    utterance.lang = langMap[language] || 'en-US';
-    utterance.rate = options.rate || 0.9;
-    utterance.pitch = options.pitch || 1;
-    utterance.volume = options.volume || 1;
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Set language
+      const langOptions = langMap[language] || ['en-US'];
+      utterance.lang = langOptions[0];
+      
+      // Find and set the best voice
+      const voice = findVoice(language);
+      if (voice) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang;
+      }
+      
+      // Set speech parameters
+      utterance.rate = options.rate || 0.85;
+      utterance.pitch = options.pitch || 1;
+      utterance.volume = options.volume || 1;
 
-    // Get available voices and try to find a matching one
-    const voices = window.speechSynthesis.getVoices();
-    const matchingVoice = voices.find(voice => 
-      voice.lang.startsWith(langMap[language]?.split('-')[0] || 'en')
-    );
-    
-    if (matchingVoice) {
-      utterance.voice = matchingVoice;
+      // Error handling
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event.error);
+      };
+
+      // Speak the text
+      window.speechSynthesis.speak(utterance);
+      return true;
+    } catch (error) {
+      console.error('Speech error:', error);
+      return false;
     }
-
-    window.speechSynthesis.speak(utterance);
-  }, [language]);
+  }, [language, findVoice]);
 
   // Stop speaking
   const stopSpeaking = useCallback(() => {
@@ -111,8 +179,22 @@ export function LanguageProvider({ children }) {
     }
   }, []);
 
-  // Check if speech synthesis is supported
-  const isSpeechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  // Get list of supported languages for speech
+  const getSupportedSpeechLanguages = useCallback(() => {
+    const voices = availableVoices.length > 0 ? availableVoices : [];
+    const supported = {};
+    
+    Object.keys(langMap).forEach(lang => {
+      const voice = findVoice(lang);
+      supported[lang] = {
+        available: !!voice,
+        voiceName: voice?.name || null,
+        voiceLang: voice?.lang || null
+      };
+    });
+    
+    return supported;
+  }, [availableVoices, findVoice]);
 
   const value = {
     language,
@@ -122,6 +204,8 @@ export function LanguageProvider({ children }) {
     stopSpeaking,
     isSpeechSupported,
     availableLanguages,
+    availableVoices,
+    getSupportedSpeechLanguages,
     isLoaded
   };
 

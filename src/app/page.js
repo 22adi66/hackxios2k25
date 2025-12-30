@@ -13,7 +13,8 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  Database
+  Database,
+  ChevronRight,
 } from 'lucide-react';
 import FarmGuardScanner from '@/components/FarmGuardScanner';
 import LanguageSelector from '@/components/LanguageSelector';
@@ -191,34 +192,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* STATS GRID */}
-      <section className="mb-8">
-        <h2 
-          className="text-xl font-bold mb-4 tracking-wider text-gray-300"
-          style={{ fontFamily: 'Orbitron, sans-serif' }}
-        >
-          {t('systemStatus')}
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {stats.map((stat, index) => (
-            <div 
-              key={index}
-              className="cyber-card cyber-card-glow rounded-xl p-4 hover:border-neon-green/50 transition-all duration-300"
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <stat.icon className="w-5 h-5 text-neon-green/70" />
-                <span className="text-gray-400 text-sm uppercase tracking-wider">
-                  {stat.label}
-                </span>
-              </div>
-              <p className={`text-xl font-bold ${stat.color}`}>
-                {stat.value}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* MAIN ACTION */}
       <section className="mb-8">
         <div className="cyber-card cyber-card-glow rounded-xl p-8 text-center relative overflow-hidden">
@@ -252,7 +225,7 @@ export default function Home() {
             >
               <Camera className="w-6 h-6" />
               <span>{t('startDiagnosis')}</span>
-              <Zap className="w-6 h-6" />
+              <ChevronRight className="w-6 h-6" />
             </button>
 
             <div className="mt-6 flex items-center justify-center gap-6 text-sm text-gray-500 flex-wrap">
@@ -300,15 +273,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="text-center py-8 border-t border-gray-800">
-        <p className="text-gray-500 text-sm">
-          🌱 {t('footerText')}
-        </p>
-        <p className="text-gray-600 text-xs mt-2">
-          {t('hackathon')}
-        </p>
-      </footer>
+
 
       {/* SCANNER MODAL */}
       {showScanner && (

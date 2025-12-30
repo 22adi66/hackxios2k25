@@ -18,50 +18,96 @@ import {
   Image as ImageIcon,
   RotateCcw,
   Trash2,
-  Volume2
+  Volume2,
+  Share2,
+  MessageCircle,
+  Copy,
+  Check
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
-// Disease class keys for translation
-const DISEASE_KEYS = [
-  'healthy',
-  'earlyBlight',
-  'lateBlight',
-  'leafMold',
-  'septoriaLeafSpot',
-  'spiderMites',
-  'targetSpot',
-  'mosaicVirus',
-  'yellowLeafCurl',
-  'bacterialSpot'
-];
-
-// Disease classes that the model can detect
+// Full 38-class PlantVillage model classes (matching class_names.json)
 const DISEASE_CLASSES = [
-  { id: 0, key: 'healthy', name: 'Healthy', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
-  { id: 1, key: 'earlyBlight', name: 'Early Blight', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
-  { id: 2, key: 'lateBlight', name: 'Late Blight', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
-  { id: 3, key: 'leafMold', name: 'Leaf Mold', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
-  { id: 4, key: 'septoriaLeafSpot', name: 'Septoria Leaf Spot', severity: 'medium', color: 'text-yellow-500', bgColor: 'bg-yellow-500/20', borderColor: 'border-yellow-500' },
-  { id: 5, key: 'spiderMites', name: 'Spider Mites', severity: 'low', color: 'text-amber-400', bgColor: 'bg-amber-400/20', borderColor: 'border-amber-400' },
-  { id: 6, key: 'targetSpot', name: 'Target Spot', severity: 'medium', color: 'text-orange-500', bgColor: 'bg-orange-500/20', borderColor: 'border-orange-500' },
-  { id: 7, key: 'mosaicVirus', name: 'Mosaic Virus', severity: 'high', color: 'text-red-500', bgColor: 'bg-red-500/20', borderColor: 'border-red-500' },
-  { id: 8, key: 'yellowLeafCurl', name: 'Yellow Leaf Curl', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
-  { id: 9, key: 'bacterialSpot', name: 'Bacterial Spot', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
+  { id: 0, key: 'appleScab', name: 'Apple Scab', crop: 'Apple', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
+  { id: 1, key: 'appleBlackRot', name: 'Apple Black Rot', crop: 'Apple', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
+  { id: 2, key: 'appleCedarRust', name: 'Cedar Apple Rust', crop: 'Apple', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
+  { id: 3, key: 'appleHealthy', name: 'Apple - Healthy', crop: 'Apple', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
+  { id: 4, key: 'blueberryHealthy', name: 'Blueberry - Healthy', crop: 'Blueberry', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
+  { id: 5, key: 'cherryPowderyMildew', name: 'Cherry Powdery Mildew', crop: 'Cherry', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
+  { id: 6, key: 'cherryHealthy', name: 'Cherry - Healthy', crop: 'Cherry', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
+  { id: 7, key: 'cornGrayLeafSpot', name: 'Corn Gray Leaf Spot', crop: 'Corn', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
+  { id: 8, key: 'cornCommonRust', name: 'Corn Common Rust', crop: 'Corn', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
+  { id: 9, key: 'cornNorthernLeafBlight', name: 'Corn Northern Leaf Blight', crop: 'Corn', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
+  { id: 10, key: 'cornHealthy', name: 'Corn - Healthy', crop: 'Corn', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
+  { id: 11, key: 'grapeBlackRot', name: 'Grape Black Rot', crop: 'Grape', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
+  { id: 12, key: 'grapeBlackMeasles', name: 'Grape Black Measles (Esca)', crop: 'Grape', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
+  { id: 13, key: 'grapeLeafBlight', name: 'Grape Leaf Blight', crop: 'Grape', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
+  { id: 14, key: 'grapeHealthy', name: 'Grape - Healthy', crop: 'Grape', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
+  { id: 15, key: 'orangeCitrusGreening', name: 'Orange Citrus Greening', crop: 'Orange', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
+  { id: 16, key: 'peachBacterialSpot', name: 'Peach Bacterial Spot', crop: 'Peach', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
+  { id: 17, key: 'peachHealthy', name: 'Peach - Healthy', crop: 'Peach', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
+  { id: 18, key: 'pepperBacterialSpot', name: 'Pepper Bacterial Spot', crop: 'Pepper', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
+  { id: 19, key: 'pepperHealthy', name: 'Pepper - Healthy', crop: 'Pepper', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
+  { id: 20, key: 'potatoEarlyBlight', name: 'Potato Early Blight', crop: 'Potato', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
+  { id: 21, key: 'potatoLateBlight', name: 'Potato Late Blight', crop: 'Potato', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
+  { id: 22, key: 'potatoHealthy', name: 'Potato - Healthy', crop: 'Potato', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
+  { id: 23, key: 'raspberryHealthy', name: 'Raspberry - Healthy', crop: 'Raspberry', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
+  { id: 24, key: 'soybeanHealthy', name: 'Soybean - Healthy', crop: 'Soybean', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
+  { id: 25, key: 'squashPowderyMildew', name: 'Squash Powdery Mildew', crop: 'Squash', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
+  { id: 26, key: 'strawberryLeafScorch', name: 'Strawberry Leaf Scorch', crop: 'Strawberry', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
+  { id: 27, key: 'strawberryHealthy', name: 'Strawberry - Healthy', crop: 'Strawberry', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
+  { id: 28, key: 'tomatoBacterialSpot', name: 'Tomato Bacterial Spot', crop: 'Tomato', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
+  { id: 29, key: 'tomatoEarlyBlight', name: 'Tomato Early Blight', crop: 'Tomato', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
+  { id: 30, key: 'tomatoLateBlight', name: 'Tomato Late Blight', crop: 'Tomato', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
+  { id: 31, key: 'tomatoLeafMold', name: 'Tomato Leaf Mold', crop: 'Tomato', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
+  { id: 32, key: 'tomatoSeptoriaLeafSpot', name: 'Tomato Septoria Leaf Spot', crop: 'Tomato', severity: 'medium', color: 'text-yellow-500', bgColor: 'bg-yellow-500/20', borderColor: 'border-yellow-500' },
+  { id: 33, key: 'tomatoSpiderMites', name: 'Tomato Spider Mites', crop: 'Tomato', severity: 'low', color: 'text-amber-400', bgColor: 'bg-amber-400/20', borderColor: 'border-amber-400' },
+  { id: 34, key: 'tomatoTargetSpot', name: 'Tomato Target Spot', crop: 'Tomato', severity: 'medium', color: 'text-orange-500', bgColor: 'bg-orange-500/20', borderColor: 'border-orange-500' },
+  { id: 35, key: 'tomatoYellowLeafCurl', name: 'Tomato Yellow Leaf Curl Virus', crop: 'Tomato', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
+  { id: 36, key: 'tomatoMosaicVirus', name: 'Tomato Mosaic Virus', crop: 'Tomato', severity: 'high', color: 'text-red-500', bgColor: 'bg-red-500/20', borderColor: 'border-red-500' },
+  { id: 37, key: 'tomatoHealthy', name: 'Tomato - Healthy', crop: 'Tomato', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
 ];
 
-// Treatment key mapping for translations
-const TREATMENT_KEYS = {
-  'Healthy': 'healthy',
-  'Early Blight': 'earlyBlight',
-  'Late Blight': 'lateBlight',
-  'Leaf Mold': 'leafMold',
-  'Septoria Leaf Spot': 'septoriaLeafSpot',
-  'Spider Mites': 'spiderMites',
-  'Target Spot': 'targetSpot',
-  'Mosaic Virus': 'mosaicVirus',
-  'Yellow Leaf Curl': 'yellowLeafCurl',
-  'Bacterial Spot': 'bacterialSpot',
+// Treatment recommendations for all 38 classes
+const TREATMENTS = {
+  appleScab: 'Apply fungicide (Captan or Myclobutanil). Remove fallen leaves. Prune for air circulation.',
+  appleBlackRot: 'Remove infected fruit and cankers. Apply fungicide. Maintain tree health with proper fertilization.',
+  appleCedarRust: 'Apply fungicide in spring. Remove nearby cedar trees if possible. Use resistant varieties.',
+  appleHealthy: 'No treatment needed. Continue regular care and monitoring.',
+  blueberryHealthy: 'No treatment needed. Continue regular care and monitoring.',
+  cherryPowderyMildew: 'Apply sulfur-based fungicide. Improve air circulation. Avoid overhead watering.',
+  cherryHealthy: 'No treatment needed. Continue regular care and monitoring.',
+  cornGrayLeafSpot: 'Use resistant hybrids. Apply fungicide if severe. Rotate crops and remove debris.',
+  cornCommonRust: 'Apply fungicide (Azoxystrobin). Use resistant varieties. Plant early to avoid peak infection.',
+  cornNorthernLeafBlight: 'Apply fungicide immediately. Use resistant hybrids. Practice crop rotation.',
+  cornHealthy: 'No treatment needed. Continue regular care and monitoring.',
+  grapeBlackRot: 'Remove mummified berries. Apply fungicide (Mancozeb) before bloom. Prune for air flow.',
+  grapeBlackMeasles: 'No cure available. Remove infected vines. Avoid plant stress. Use preventive trunk treatments.',
+  grapeLeafBlight: 'Apply copper-based fungicide. Remove infected leaves. Improve vineyard sanitation.',
+  grapeHealthy: 'No treatment needed. Continue regular care and monitoring.',
+  orangeCitrusGreening: 'No cure. Remove infected trees. Control psyllid vectors. Use disease-free nursery stock.',
+  peachBacterialSpot: 'Apply copper spray during dormancy. Avoid overhead irrigation. Use resistant varieties.',
+  peachHealthy: 'No treatment needed. Continue regular care and monitoring.',
+  pepperBacterialSpot: 'Apply copper-based bactericide. Remove infected plants. Use disease-free seeds.',
+  pepperHealthy: 'No treatment needed. Continue regular care and monitoring.',
+  potatoEarlyBlight: 'Apply fungicide (Chlorothalonil). Remove infected leaves. Ensure proper plant spacing.',
+  potatoLateBlight: 'URGENT: Apply fungicide immediately (Metalaxyl). Remove and destroy infected plants. Avoid overhead watering.',
+  potatoHealthy: 'No treatment needed. Continue regular care and monitoring.',
+  raspberryHealthy: 'No treatment needed. Continue regular care and monitoring.',
+  soybeanHealthy: 'No treatment needed. Continue regular care and monitoring.',
+  squashPowderyMildew: 'Apply sulfur or neem oil. Improve air circulation. Water at base of plants.',
+  strawberryLeafScorch: 'Remove infected leaves. Apply fungicide. Ensure good drainage and air circulation.',
+  strawberryHealthy: 'No treatment needed. Continue regular care and monitoring.',
+  tomatoBacterialSpot: 'Apply copper-based bactericide. Remove infected plants. Use disease-free seeds. Rotate crops.',
+  tomatoEarlyBlight: 'Apply copper-based fungicide. Remove affected leaves. Ensure proper spacing.',
+  tomatoLateBlight: 'URGENT: Apply fungicide immediately. Remove and destroy infected plants. Avoid overhead watering.',
+  tomatoLeafMold: 'Improve ventilation. Reduce humidity. Apply fungicide if severe.',
+  tomatoSeptoriaLeafSpot: 'Remove infected leaves. Apply fungicide. Mulch to prevent soil splash.',
+  tomatoSpiderMites: 'Spray with water to dislodge mites. Apply neem oil or insecticidal soap. Introduce predatory mites.',
+  tomatoTargetSpot: 'Apply fungicide (Chlorothalonil). Remove infected leaves. Improve air circulation.',
+  tomatoYellowLeafCurl: 'No cure. Remove infected plants. Control whiteflies. Use resistant varieties.',
+  tomatoMosaicVirus: 'No cure. Remove infected plants. Disinfect tools. Wash hands before handling plants.',
+  tomatoHealthy: 'No treatment needed. Continue regular care and monitoring.',
 };
 
 export default function FarmGuardScanner({ onClose, isOfflineMode }) {
@@ -89,50 +135,216 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
   const [inferenceTime, setInferenceTime] = useState(0);
   const [frameCount, setFrameCount] = useState(0);
   const [cameraReady, setCameraReady] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
-  // Speak detection result
-  const announceResult = useCallback((pred) => {
-    if (!voiceAlertsEnabled || !isSpeechSupported || !pred) return;
+  // Get the current image as a blob for sharing
+  const getImageBlob = useCallback(async () => {
+    try {
+      let imageDataUrl = null;
+      
+      if (inputMode === 'upload' && uploadedImageUrl) {
+        imageDataUrl = uploadedImageUrl;
+      } else if (inputMode === 'camera' && webcamRef.current) {
+        imageDataUrl = webcamRef.current.getScreenshot();
+      }
+      
+      if (!imageDataUrl) return null;
+      
+      // Convert data URL to blob
+      const response = await fetch(imageDataUrl);
+      const blob = await response.blob();
+      return blob;
+    } catch (err) {
+      console.error('Error getting image blob:', err);
+      return null;
+    }
+  }, [inputMode, uploadedImageUrl]);
+
+  // Build share message for a prediction
+  const buildShareMessage = useCallback((pred) => {
+    if (!pred) return '';
     
-    // Don't repeat the same announcement
-    if (lastAnnouncedPrediction.current === pred.class.name) return;
-    lastAnnouncedPrediction.current = pred.class.name;
-    
-    const diseaseName = t(pred.class.key);
+    const diseaseName = pred.class.name;
+    const cropName = pred.class.crop || '';
     const confidence = Math.round(pred.confidence);
-    const severity = t(pred.class.severity);
-    const treatment = t(`treatments.${pred.class.key}`);
+    const severity = pred.class.severity !== 'none' ? pred.class.severity : '';
+    const treatment = TREATMENTS[pred.class.key] || 'Continue monitoring your crop.';
     
-    // Build announcement message based on language
-    let message = '';
-    if (language === 'en') {
-      message = pred.class.severity === 'none'
-        ? `Good news! Your crop is healthy with ${confidence}% confidence.`
-        : `Alert! ${diseaseName} detected with ${confidence}% confidence. Severity: ${severity}. Treatment: ${treatment}`;
-    } else if (language === 'hi') {
-      message = pred.class.severity === 'none'
-        ? `शुभ समाचार! आपकी फसल ${confidence}% विश्वास के साथ स्वस्थ है।`
-        : `चेतावनी! ${diseaseName} का पता चला, विश्वास ${confidence}%। गंभीरता: ${severity}। उपचार: ${treatment}`;
-    } else if (language === 'te') {
-      message = pred.class.severity === 'none'
-        ? `శుభవార్త! మీ పంట ${confidence}% విశ్వాసంతో ఆరోగ్యంగా ఉంది.`
-        : `హెచ్చరిక! ${diseaseName} కనుగొనబడింది, విశ్వాసం ${confidence}%। తీవ్రత: ${severity}। చికిత్స: ${treatment}`;
-    } else if (language === 'ta') {
-      message = pred.class.severity === 'none'
-        ? `நல்ல செய்தி! உங்கள் பயிர் ${confidence}% நம்பிக்கையுடன் ஆரோக்கியமாக உள்ளது.`
-        : `எச்சரிக்கை! ${diseaseName} கண்டறியப்பட்டது, நம்பிக்கை ${confidence}%। தீவிரம்: ${severity}। சிகிச்சை: ${treatment}`;
-    } else if (language === 'pa') {
-      message = pred.class.severity === 'none'
-        ? `ਖੁਸ਼ਖਬਰੀ! ਤੁਹਾਡੀ ਫਸਲ ${confidence}% ਭਰੋਸੇ ਨਾਲ ਸਿਹਤਮੰਦ ਹੈ।`
-        : `ਚੇਤਾਵਨੀ! ${diseaseName} ਮਿਲਿਆ, ਭਰੋਸਾ ${confidence}%। ਗੰਭੀਰਤਾ: ${severity}। ਇਲਾਜ: ${treatment}`;
-    } else if (language === 'kn') {
-      message = pred.class.severity === 'none'
-        ? `ಶುಭ ಸುದ್ದಿ! ನಿಮ್ಮ ಬೆಳೆ ${confidence}% ವಿಶ್ವಾಸದೊಂದಿಗೆ ಆರೋಗ್ಯಕರವಾಗಿದೆ.`
-        : `ಎಚ್ಚರಿಕೆ! ${diseaseName} ಪತ್ತೆಯಾಗಿದೆ, ವಿಶ್ವಾಸ ${confidence}%। ತೀವ್ರತೆ: ${severity}। ಚಿಕಿತ್ಸೆ: ${treatment}`;
+    // Get severity emoji
+    const severityEmoji = pred.class.severity === 'high' ? '🔴' : 
+                          pred.class.severity === 'medium' ? '🟡' : 
+                          pred.class.severity === 'low' ? '🟢' : '✅';
+    
+    const statusEmoji = pred.class.severity === 'none' ? '✅' : '⚠️';
+    
+    let message = `🌿 *FARMGUARD AI* 🌿\n`;
+    message += `Crop Disease Detector\n\n`;
+    
+    message += `${statusEmoji} *DIAGNOSIS*\n`;
+    if (cropName) message += `Crop: ${cropName}\n`;
+    message += `Disease: ${diseaseName}\n`;
+    message += `Confidence: ${confidence}%\n`;
+    if (severity) {
+      message += `Severity: ${severityEmoji} ${severity.toUpperCase()}\n`;
+    }
+    message += `\n`;
+    
+    message += `💊 *TREATMENT*\n`;
+    message += `${treatment}\n\n`;
+    
+    message += `📅 ${new Date().toLocaleDateString()}\n`;
+    message += `🤖 FarmGuard AI - Works Offline`;
+    
+    return message;
+  }, []);
+
+  // Detect if mobile device
+  const isMobile = useCallback(() => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }, []);
+
+  // Share via WhatsApp - DIRECT, no Web Share API
+  const shareWhatsApp = useCallback(() => {
+    if (!prediction) return;
+    const message = buildShareMessage(prediction);
+    const encodedMessage = encodeURIComponent(message);
+    
+    // Use different URLs for mobile vs desktop
+    if (isMobile()) {
+      // Mobile: Use WhatsApp app deep link
+      window.open(`https://api.whatsapp.com/send?text=${encodedMessage}`, '_blank');
+    } else {
+      // Desktop: Use WhatsApp Web
+      window.open(`https://web.whatsapp.com/send?text=${encodedMessage}`, '_blank');
+    }
+  }, [prediction, buildShareMessage, isMobile]);
+
+  // Share via SMS - DIRECT
+  const shareSMS = useCallback(() => {
+    if (!prediction) return;
+    const message = buildShareMessage(prediction);
+    const encodedMessage = encodeURIComponent(message);
+    window.location.href = `sms:?body=${encodedMessage}`;
+  }, [prediction, buildShareMessage]);
+
+  // Share with image using Native Share API (for mobile)
+  const shareNative = useCallback(async () => {
+    if (!prediction) return;
+    setIsSharing(true);
+    
+    try {
+      const message = buildShareMessage(prediction);
+      const imageBlob = await getImageBlob();
+      
+      // Check if Web Share API with files is supported
+      if (navigator.share && imageBlob) {
+        const file = new File([imageBlob], 'farmguard-diagnosis.jpg', { type: 'image/jpeg' });
+        const shareData = {
+          text: message,
+          files: [file],
+        };
+        
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+          setIsSharing(false);
+          return;
+        }
+        
+        // Try sharing without files
+        await navigator.share({ text: message });
+      } else if (navigator.share) {
+        await navigator.share({ text: message });
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(message);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Share error:', err);
+      }
     }
     
-    speak(message);
-  }, [voiceAlertsEnabled, isSpeechSupported, t, speak, language]);
+    setIsSharing(false);
+  }, [prediction, buildShareMessage, getImageBlob]);
+
+  // Copy to clipboard
+  const copyToClipboard = useCallback(async () => {
+    if (!prediction) return;
+    const message = buildShareMessage(prediction);
+    try {
+      await navigator.clipboard.writeText(message);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  }, [prediction, buildShareMessage]);
+
+  // Build voice message for a prediction
+  const buildVoiceMessage = useCallback((pred) => {
+    if (!pred) return '';
+    
+    const diseaseName = pred.class.name;
+    const cropName = pred.class.crop || 'crop';
+    const confidence = Math.round(pred.confidence);
+    const severity = pred.class.severity;
+    const treatment = TREATMENTS[pred.class.key] || 'Continue monitoring.';
+    
+    // Build announcement message based on language
+    const isHealthy = pred.class.severity === 'none';
+    
+    const messages = {
+      en: isHealthy
+        ? `Good news! Your ${cropName} is healthy with ${confidence}% confidence.`
+        : `Alert! ${diseaseName} detected with ${confidence}% confidence. Severity: ${severity}. Treatment: ${treatment}`,
+      hi: isHealthy
+        ? `शुभ समाचार! आपकी फसल ${confidence}% विश्वास के साथ स्वस्थ है।`
+        : `चेतावनी! ${diseaseName} का पता चला, विश्वास ${confidence}%। गंभीरता: ${severity}। उपचार: ${treatment}`,
+      te: isHealthy
+        ? `శుభవార్త! మీ పంట ${confidence}% విశ్వాసంతో ఆరోగ్యంగా ఉంది.`
+        : `హెచ్చరిక! ${diseaseName} కనుగొనబడింది, విశ్వాసం ${confidence}%। తీవ్రత: ${severity}। చికిత్స: ${treatment}`,
+      ta: isHealthy
+        ? `நல்ல செய்தி! உங்கள் பயிர் ${confidence}% நம்பிக்கையுடன் ஆரோக்கியமாக உள்ளது.`
+        : `எச்சரிக்கை! ${diseaseName} கண்டறியப்பட்டது, நம்பிக்கை ${confidence}%। தீவிரம்: ${severity}। சிகிச்சை: ${treatment}`,
+      pa: isHealthy
+        ? `ਖੁਸ਼ਖਬਰੀ! ਤੁਹਾਡੀ ਫਸਲ ${confidence}% ਭਰੋਸੇ ਨਾਲ ਸਿਹਤਮੰਦ ਹੈ।`
+        : `ਚੇਤਾਵਨੀ! ${diseaseName} ਮਿਲਿਆ, ਭਰੋਸਾ ${confidence}%। ਗੰਭੀਰਤਾ: ${severity}। ਇਲਾਜ: ${treatment}`,
+      kn: isHealthy
+        ? `ಶುಭ ಸುದ್ದಿ! ನಿಮ್ಮ ಬೆಳೆ ${confidence}% ವಿಶ್ವಾಸದೊಂದಿಗೆ ಆರೋಗ್ಯಕರವಾಗಿದೆ.`
+        : `ಎಚ್ಚರಿಕೆ! ${diseaseName} ಪತ್ತೆಯಾಗಿದೆ, ವಿಶ್ವಾಸ ${confidence}%। ತೀವ್ರತೆ: ${severity}। ಚಿಕಿತ್ಸೆ: ${treatment}`
+    };
+    
+    return messages[language] || messages.en;
+  }, [language]);
+
+  // Speak detection result (auto-announce)
+  const announceResult = useCallback((pred, force = false) => {
+    if (!isSpeechSupported || !pred) return;
+    
+    // For auto-announce: check voiceAlertsEnabled and don't repeat
+    if (!force) {
+      if (!voiceAlertsEnabled) return;
+      if (lastAnnouncedPrediction.current === pred.class.name) return;
+      lastAnnouncedPrediction.current = pred.class.name;
+    }
+    
+    const message = buildVoiceMessage(pred);
+    if (message) {
+      speak(message);
+    }
+  }, [voiceAlertsEnabled, isSpeechSupported, buildVoiceMessage, speak]);
+  
+  // Manual read aloud (always works, ignores lastAnnouncedPrediction)
+  const readAloud = useCallback(() => {
+    if (!isSpeechSupported || !prediction) return;
+    const message = buildVoiceMessage(prediction);
+    if (message) {
+      speak(message);
+    }
+  }, [isSpeechSupported, prediction, buildVoiceMessage, speak]);
 
   // Effect to announce predictions
   useEffect(() => {
@@ -244,7 +456,8 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
       // Resize to 224x224 (MobileNetV2 input size)
       tensor = tf.image.resizeBilinear(tensor, [224, 224]);
       
-      // Normalize to [-1, 1] range (MobileNetV2 preprocessing)
+      // IMPORTANT: MobileNetV2 expects [-1, 1] normalization!
+      // This matches tf.keras.applications.mobilenet_v2.preprocess_input
       tensor = tensor.toFloat().div(127.5).sub(1);
       
       // Add batch dimension
@@ -274,16 +487,20 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
       const maxIndex = predictions.indexOf(Math.max(...predictions));
       const confidence = predictions[maxIndex] * 100;
       
-      // For demo mode, simulate realistic predictions
-      const demoConfidence = 60 + Math.random() * 35;
-      const demoIndex = Math.floor(Math.random() * 3);
+      // Debug: Log top 5 predictions to console
+      const sortedPreds = [...predictions]
+        .map((p, i) => ({ index: i, prob: p * 100, name: DISEASE_CLASSES[i]?.name }))
+        .sort((a, b) => b.prob - a.prob)
+        .slice(0, 5);
+      console.log('Top 5 predictions:', sortedPreds);
       
+      // Use ACTUAL model predictions (not demo/random values)
       const finalPrediction = {
-        class: DISEASE_CLASSES[demoIndex],
-        confidence: demoConfidence,
+        class: DISEASE_CLASSES[maxIndex] || DISEASE_CLASSES[0],
+        confidence: confidence,
         allPredictions: DISEASE_CLASSES.map((c, i) => ({
           ...c,
-          probability: predictions[i] * 100 || Math.random() * 20
+          probability: (predictions[i] || 0) * 100
         })).sort((a, b) => b.probability - a.probability)
       };
       
@@ -779,9 +996,14 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                   ${prediction.class.severity === 'high' ? 'alert-card' : ''}
                 `}>
                   <div className="flex items-center justify-between mb-2">
-                    <span className={`text-lg font-bold ${prediction.class.color}`}>
-                      {t(prediction.class.key)}
-                    </span>
+                    <div>
+                      <span className={`text-lg font-bold ${prediction.class.color}`}>
+                        {prediction.class.name}
+                      </span>
+                      {prediction.class.crop && (
+                        <span className="text-xs text-gray-400 ml-2">({prediction.class.crop})</span>
+                      )}
+                    </div>
                     {prediction.class.severity === 'none' ? (
                       <CheckCircle className="w-6 h-6 text-neon-green" />
                     ) : (
@@ -824,47 +1046,81 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                   {t('treatment')}
                 </h3>
                 <p className="text-gray-300 text-sm leading-relaxed">
-                  {t(`treatments.${prediction.class.key}`)}
+                  {TREATMENTS[prediction.class.key] || 'Continue monitoring your crop.'}
                 </p>
                 
                 {/* Voice Announcement Button */}
                 {isSpeechSupported && (
                   <button
-                    onClick={() => announceResult(prediction)}
+                    onClick={readAloud}
                     className="mt-3 w-full py-2 rounded-lg border border-neon-green/30 bg-neon-green/10 text-neon-green text-sm flex items-center justify-center gap-2 hover:bg-neon-green/20 transition-all duration-300"
                   >
                     <Volume2 className="w-4 h-4" />
                     🔊 {language === 'en' ? 'Read Aloud' : language === 'hi' ? 'सुनें' : language === 'te' ? 'వినండి' : language === 'ta' ? 'கேளுங்கள்' : language === 'pa' ? 'ਸੁਣੋ' : language === 'kn' ? 'ಕೇಳಿ' : 'Read Aloud'}
                   </button>
                 )}
-              </div>
-            )}
 
-            {/* All Predictions */}
-            {prediction && prediction.allPredictions && (
-              <div className="cyber-card cyber-card-glow rounded-xl p-4">
-                <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Activity className="w-4 h-4" />
-                  {t('allClasses')}
-                </h3>
-                <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-                  {prediction.allPredictions.slice(0, 5).map((pred, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-400 truncate">{t(pred.key)}</span>
-                      <span className={pred.color}>{pred.probability.toFixed(1)}%</span>
-                    </div>
-                  ))}
+                {/* Share Results Section */}
+                <div className="mt-4 pt-4 border-t border-gray-700">
+                  <h4 className="text-gray-400 text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <Share2 className="w-3 h-3" />
+                    {language === 'en' ? 'Share Results' : language === 'hi' ? 'परिणाम साझा करें' : language === 'te' ? 'ఫలితాలను షేర్ చేయండి' : language === 'ta' ? 'முடிவுகளை பகிரவும்' : language === 'pa' ? 'ਨਤੀਜੇ ਸਾਂਝੇ ਕਰੋ' : language === 'kn' ? 'ಫಲಿತಾಂಶಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಿ' : 'Share Results'}
+                  </h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* WhatsApp - Direct link */}
+                    <button
+                      onClick={shareWhatsApp}
+                      className="py-2.5 px-3 rounded-lg bg-green-500/20 border border-green-500/50 text-green-400 text-xs font-medium flex flex-col items-center gap-1.5 hover:bg-green-500/30 active:scale-95 transition-all duration-300"
+                    >
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                      </svg>
+                      <span>WhatsApp</span>
+                    </button>
+                    
+                    {/* SMS - Direct link */}
+                    <button
+                      onClick={shareSMS}
+                      className="py-2.5 px-3 rounded-lg bg-blue-500/20 border border-blue-500/50 text-blue-400 text-xs font-medium flex flex-col items-center gap-1.5 hover:bg-blue-500/30 active:scale-95 transition-all duration-300"
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                      <span>SMS</span>
+                    </button>
+                    
+                    {/* Copy */}
+                    <button
+                      onClick={copyToClipboard}
+                      className={`py-2.5 px-3 rounded-lg border text-xs font-medium flex flex-col items-center gap-1.5 active:scale-95 transition-all duration-300 ${
+                        copied 
+                          ? 'bg-neon-green/20 border-neon-green/50 text-neon-green' 
+                          : 'bg-gray-700/50 border-gray-600 text-gray-300 hover:bg-gray-700'
+                      }`}
+                    >
+                      {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                      <span>{copied ? (language === 'en' ? 'Copied!' : '✓') : (language === 'en' ? 'Copy' : language === 'hi' ? 'कॉपी' : language === 'te' ? 'కాపీ' : language === 'ta' ? 'நகல்' : language === 'pa' ? 'ਕਾਪੀ' : language === 'kn' ? 'ನಕಲಿಸಿ' : 'Copy')}</span>
+                    </button>
+                  </div>
+                  
+                  {/* Share with Image button (uses native share) */}
+                  <button
+                    onClick={shareNative}
+                    disabled={isSharing}
+                    className="mt-3 w-full py-2.5 rounded-lg bg-purple-500/20 border border-purple-500/50 text-purple-400 text-xs font-medium flex items-center justify-center gap-2 hover:bg-purple-500/30 active:scale-[0.98] transition-all duration-300 disabled:opacity-50"
+                  >
+                    {isSharing ? (
+                      <div className="w-4 h-4 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Share2 className="w-4 h-4" />
+                        📷 {language === 'en' ? 'Share with Image' : language === 'hi' ? 'छवि के साथ साझा करें' : 'Share with Image'}
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* System Info */}
-            <div className="cyber-card rounded-lg p-3 text-xs text-gray-500">
-              <div className="flex items-center justify-between">
-                <span>TensorFlow.js v{tf.version.tfjs}</span>
-                <span className="text-neon-green">WebGL Active</span>
-              </div>
-            </div>
+
           </div>
         </div>
       </div>
