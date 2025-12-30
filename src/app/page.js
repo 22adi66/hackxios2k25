@@ -222,23 +222,9 @@ export default function Home() {
               {t('cropDiseaseDetection')}
             </h2>
             
-            <p className="text-gray-400 mb-4 max-w-lg mx-auto">
+            <p className="text-gray-400 mb-8 max-w-lg mx-auto">
               {t('scanDescription')}
             </p>
-
-            {/* Voice Button for Accessibility */}
-            {isSpeechSupported && (
-              <button
-                onClick={readPageDescription}
-                className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-green/10 border border-neon-green/30 text-neon-green hover:bg-neon-green/20 transition-all duration-300"
-                title={language === 'en' ? 'Listen to instructions' : language === 'hi' ? 'निर्देश सुनें' : language === 'te' ? 'సూచనలు వినండి' : language === 'ta' ? 'வழிமுறைகளைக் கேளுங்கள்' : language === 'pa' ? 'ਹਦਾਇਤਾਂ ਸੁਣੋ' : language === 'kn' ? 'ಸೂಚನೆಗಳನ್ನು ಕೇಳಿ' : 'Listen'}
-              >
-                <Volume2 className="w-5 h-5" />
-                <span className="text-sm font-medium">
-                  {language === 'en' ? '🔊 Listen' : language === 'hi' ? '🔊 सुनें' : language === 'te' ? '🔊 వినండి' : language === 'ta' ? '🔊 கேளுங்கள்' : language === 'pa' ? '🔊 ਸੁਣੋ' : language === 'kn' ? '🔊 ಕೇಳಿ' : '🔊 Listen'}
-                </span>
-              </button>
-            )}
 
             <button
               onClick={handleStartDiagnosis}
@@ -248,6 +234,20 @@ export default function Home() {
               <span>{t('startDiagnosis')}</span>
               <ChevronRight className="w-6 h-6" />
             </button>
+
+            {/* Voice Button for Accessibility - Below Start Button */}
+            {isSpeechSupported && (
+              <button
+                onClick={readPageDescription}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-green/10 border border-neon-green/30 text-neon-green hover:bg-neon-green/20 transition-all duration-300"
+                title={language === 'en' ? 'Listen to instructions' : language === 'hi' ? 'निर्देश सुनें' : language === 'te' ? 'సూచనలు వినండి' : language === 'ta' ? 'வழிமுறைகளைக் கேளுங்கள்' : language === 'pa' ? 'ਹਦਾਇਤਾਂ ਸੁਣੋ' : language === 'kn' ? 'ಸೂಚನೆಗಳನ್ನು ಕೇಳಿ' : 'Listen'}
+              >
+                <Volume2 className="w-5 h-5" />
+                <span className="text-sm font-medium">
+                  {language === 'en' ? '🔊 Listen' : language === 'hi' ? '🔊 सुनें' : language === 'te' ? '🔊 వినండి' : language === 'ta' ? '🔊 கேளுங்கள்' : language === 'pa' ? '🔊 ਸੁਣੋ' : language === 'kn' ? '🔊 ಕೇಳಿ' : '🔊 Listen'}
+                </span>
+              </button>
+            )}
 
             <div className="mt-6 flex items-center justify-center gap-6 text-sm text-gray-500 flex-wrap">
               <span className="flex items-center gap-2">

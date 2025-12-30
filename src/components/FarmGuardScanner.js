@@ -26,88 +26,16 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
-// Full 38-class PlantVillage model classes (matching class_names.json)
+// 2-class model: Healthy vs Diseased
 const DISEASE_CLASSES = [
-  { id: 0, key: 'appleScab', name: 'Apple Scab', crop: 'Apple', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
-  { id: 1, key: 'appleBlackRot', name: 'Apple Black Rot', crop: 'Apple', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
-  { id: 2, key: 'appleCedarRust', name: 'Cedar Apple Rust', crop: 'Apple', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
-  { id: 3, key: 'appleHealthy', name: 'Apple - Healthy', crop: 'Apple', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
-  { id: 4, key: 'blueberryHealthy', name: 'Blueberry - Healthy', crop: 'Blueberry', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
-  { id: 5, key: 'cherryPowderyMildew', name: 'Cherry Powdery Mildew', crop: 'Cherry', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
-  { id: 6, key: 'cherryHealthy', name: 'Cherry - Healthy', crop: 'Cherry', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
-  { id: 7, key: 'cornGrayLeafSpot', name: 'Corn Gray Leaf Spot', crop: 'Corn', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
-  { id: 8, key: 'cornCommonRust', name: 'Corn Common Rust', crop: 'Corn', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
-  { id: 9, key: 'cornNorthernLeafBlight', name: 'Corn Northern Leaf Blight', crop: 'Corn', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
-  { id: 10, key: 'cornHealthy', name: 'Corn - Healthy', crop: 'Corn', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
-  { id: 11, key: 'grapeBlackRot', name: 'Grape Black Rot', crop: 'Grape', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
-  { id: 12, key: 'grapeBlackMeasles', name: 'Grape Black Measles (Esca)', crop: 'Grape', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
-  { id: 13, key: 'grapeLeafBlight', name: 'Grape Leaf Blight', crop: 'Grape', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
-  { id: 14, key: 'grapeHealthy', name: 'Grape - Healthy', crop: 'Grape', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
-  { id: 15, key: 'orangeCitrusGreening', name: 'Orange Citrus Greening', crop: 'Orange', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
-  { id: 16, key: 'peachBacterialSpot', name: 'Peach Bacterial Spot', crop: 'Peach', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
-  { id: 17, key: 'peachHealthy', name: 'Peach - Healthy', crop: 'Peach', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
-  { id: 18, key: 'pepperBacterialSpot', name: 'Pepper Bacterial Spot', crop: 'Pepper', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
-  { id: 19, key: 'pepperHealthy', name: 'Pepper - Healthy', crop: 'Pepper', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
-  { id: 20, key: 'potatoEarlyBlight', name: 'Potato Early Blight', crop: 'Potato', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
-  { id: 21, key: 'potatoLateBlight', name: 'Potato Late Blight', crop: 'Potato', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
-  { id: 22, key: 'potatoHealthy', name: 'Potato - Healthy', crop: 'Potato', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
-  { id: 23, key: 'raspberryHealthy', name: 'Raspberry - Healthy', crop: 'Raspberry', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
-  { id: 24, key: 'soybeanHealthy', name: 'Soybean - Healthy', crop: 'Soybean', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
-  { id: 25, key: 'squashPowderyMildew', name: 'Squash Powdery Mildew', crop: 'Squash', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
-  { id: 26, key: 'strawberryLeafScorch', name: 'Strawberry Leaf Scorch', crop: 'Strawberry', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
-  { id: 27, key: 'strawberryHealthy', name: 'Strawberry - Healthy', crop: 'Strawberry', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
-  { id: 28, key: 'tomatoBacterialSpot', name: 'Tomato Bacterial Spot', crop: 'Tomato', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
-  { id: 29, key: 'tomatoEarlyBlight', name: 'Tomato Early Blight', crop: 'Tomato', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
-  { id: 30, key: 'tomatoLateBlight', name: 'Tomato Late Blight', crop: 'Tomato', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
-  { id: 31, key: 'tomatoLeafMold', name: 'Tomato Leaf Mold', crop: 'Tomato', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
-  { id: 32, key: 'tomatoSeptoriaLeafSpot', name: 'Tomato Septoria Leaf Spot', crop: 'Tomato', severity: 'medium', color: 'text-yellow-500', bgColor: 'bg-yellow-500/20', borderColor: 'border-yellow-500' },
-  { id: 33, key: 'tomatoSpiderMites', name: 'Tomato Spider Mites', crop: 'Tomato', severity: 'low', color: 'text-amber-400', bgColor: 'bg-amber-400/20', borderColor: 'border-amber-400' },
-  { id: 34, key: 'tomatoTargetSpot', name: 'Tomato Target Spot', crop: 'Tomato', severity: 'medium', color: 'text-orange-500', bgColor: 'bg-orange-500/20', borderColor: 'border-orange-500' },
-  { id: 35, key: 'tomatoYellowLeafCurl', name: 'Tomato Yellow Leaf Curl Virus', crop: 'Tomato', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
-  { id: 36, key: 'tomatoMosaicVirus', name: 'Tomato Mosaic Virus', crop: 'Tomato', severity: 'high', color: 'text-red-500', bgColor: 'bg-red-500/20', borderColor: 'border-red-500' },
-  { id: 37, key: 'tomatoHealthy', name: 'Tomato - Healthy', crop: 'Tomato', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
+  { id: 0, key: 'healthy', name: 'Healthy Plant', crop: 'General', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
+  { id: 1, key: 'diseased', name: 'Disease Detected', crop: 'General', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
 ];
 
-// Treatment recommendations for all 38 classes
+// Treatment recommendations for 2 classes
 const TREATMENTS = {
-  appleScab: 'Apply fungicide (Captan or Myclobutanil). Remove fallen leaves. Prune for air circulation.',
-  appleBlackRot: 'Remove infected fruit and cankers. Apply fungicide. Maintain tree health with proper fertilization.',
-  appleCedarRust: 'Apply fungicide in spring. Remove nearby cedar trees if possible. Use resistant varieties.',
-  appleHealthy: 'No treatment needed. Continue regular care and monitoring.',
-  blueberryHealthy: 'No treatment needed. Continue regular care and monitoring.',
-  cherryPowderyMildew: 'Apply sulfur-based fungicide. Improve air circulation. Avoid overhead watering.',
-  cherryHealthy: 'No treatment needed. Continue regular care and monitoring.',
-  cornGrayLeafSpot: 'Use resistant hybrids. Apply fungicide if severe. Rotate crops and remove debris.',
-  cornCommonRust: 'Apply fungicide (Azoxystrobin). Use resistant varieties. Plant early to avoid peak infection.',
-  cornNorthernLeafBlight: 'Apply fungicide immediately. Use resistant hybrids. Practice crop rotation.',
-  cornHealthy: 'No treatment needed. Continue regular care and monitoring.',
-  grapeBlackRot: 'Remove mummified berries. Apply fungicide (Mancozeb) before bloom. Prune for air flow.',
-  grapeBlackMeasles: 'No cure available. Remove infected vines. Avoid plant stress. Use preventive trunk treatments.',
-  grapeLeafBlight: 'Apply copper-based fungicide. Remove infected leaves. Improve vineyard sanitation.',
-  grapeHealthy: 'No treatment needed. Continue regular care and monitoring.',
-  orangeCitrusGreening: 'No cure. Remove infected trees. Control psyllid vectors. Use disease-free nursery stock.',
-  peachBacterialSpot: 'Apply copper spray during dormancy. Avoid overhead irrigation. Use resistant varieties.',
-  peachHealthy: 'No treatment needed. Continue regular care and monitoring.',
-  pepperBacterialSpot: 'Apply copper-based bactericide. Remove infected plants. Use disease-free seeds.',
-  pepperHealthy: 'No treatment needed. Continue regular care and monitoring.',
-  potatoEarlyBlight: 'Apply fungicide (Chlorothalonil). Remove infected leaves. Ensure proper plant spacing.',
-  potatoLateBlight: 'URGENT: Apply fungicide immediately (Metalaxyl). Remove and destroy infected plants. Avoid overhead watering.',
-  potatoHealthy: 'No treatment needed. Continue regular care and monitoring.',
-  raspberryHealthy: 'No treatment needed. Continue regular care and monitoring.',
-  soybeanHealthy: 'No treatment needed. Continue regular care and monitoring.',
-  squashPowderyMildew: 'Apply sulfur or neem oil. Improve air circulation. Water at base of plants.',
-  strawberryLeafScorch: 'Remove infected leaves. Apply fungicide. Ensure good drainage and air circulation.',
-  strawberryHealthy: 'No treatment needed. Continue regular care and monitoring.',
-  tomatoBacterialSpot: 'Apply copper-based bactericide. Remove infected plants. Use disease-free seeds. Rotate crops.',
-  tomatoEarlyBlight: 'Apply copper-based fungicide. Remove affected leaves. Ensure proper spacing.',
-  tomatoLateBlight: 'URGENT: Apply fungicide immediately. Remove and destroy infected plants. Avoid overhead watering.',
-  tomatoLeafMold: 'Improve ventilation. Reduce humidity. Apply fungicide if severe.',
-  tomatoSeptoriaLeafSpot: 'Remove infected leaves. Apply fungicide. Mulch to prevent soil splash.',
-  tomatoSpiderMites: 'Spray with water to dislodge mites. Apply neem oil or insecticidal soap. Introduce predatory mites.',
-  tomatoTargetSpot: 'Apply fungicide (Chlorothalonil). Remove infected leaves. Improve air circulation.',
-  tomatoYellowLeafCurl: 'No cure. Remove infected plants. Control whiteflies. Use resistant varieties.',
-  tomatoMosaicVirus: 'No cure. Remove infected plants. Disinfect tools. Wash hands before handling plants.',
-  tomatoHealthy: 'No treatment needed. Continue regular care and monitoring.',
+  healthy: 'Your plant looks healthy! Continue regular watering, ensure proper sunlight, and monitor for any changes.',
+  diseased: 'Disease detected! Remove affected leaves immediately. Apply neem oil or copper-based fungicide. Improve air circulation around plants. Avoid overhead watering. Consult local agricultural extension for specific treatment.',
 };
 
 export default function FarmGuardScanner({ onClose, isOfflineMode }) {
@@ -456,9 +384,8 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
       // Resize to 224x224 (MobileNetV2 input size)
       tensor = tf.image.resizeBilinear(tensor, [224, 224]);
       
-      // IMPORTANT: MobileNetV2 expects [-1, 1] normalization!
-      // This matches tf.keras.applications.mobilenet_v2.preprocess_input
-      tensor = tensor.toFloat().div(127.5).sub(1);
+      // Normalize to [0, 1] - matches Keras ImageDataGenerator rescale=1./255
+      tensor = tensor.toFloat().div(255.0);
       
       // Add batch dimension
       tensor = tensor.expandDims(0);
