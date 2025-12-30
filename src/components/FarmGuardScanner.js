@@ -8,14 +8,16 @@ import {
   Camera,
   AlertTriangle,
   CheckCircle,
-  Loader2,
   Cpu,
   Activity,
   Leaf,
-  RefreshCw,
   ZoomIn,
   Settings,
-  WifiOff
+  WifiOff,
+  Upload,
+  Image as ImageIcon,
+  RotateCcw,
+  Trash2
 } from 'lucide-react';
 
 // Disease classes that the model can detect
@@ -48,8 +50,14 @@ const TREATMENTS = {
 
 export default function FarmGuardScanner({ onClose, isOfflineMode }) {
   const webcamRef = useRef(null);
-  const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const imageRef = useRef(null);
   const animationRef = useRef(null);
+  
+  // Input mode: 'camera' or 'upload'
+  const [inputMode, setInputMode] = useState('camera');
+  const [uploadedImage, setUploadedImage] = useState(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
   
   const [model, setModel] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,6 +65,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
   const [loadingMessage, setLoadingMessage] = useState('Initializing Neural Network...');
   const [error, setError] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [prediction, setPrediction] = useState(null);
   const [inferenceTime, setInferenceTime] = useState(0);
   const [frameCount, setFrameCount] = useState(0);
@@ -93,7 +102,6 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
           setLoadingMessage('Demo mode: Simulating AI detection...');
           
           // Create a simple demo model for demonstration
-          // In production, you would have a real trained model
           loadedModel = await createDemoModel();
           setLoadingProgress(90);
         }
@@ -157,11 +165,11 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
     return model;
   };
 
-  // Preprocess image for model input
-  const preprocessImage = (video) => {
+  // Preprocess image for model input (works for both video and image elements)
+  const preprocessImage = (imageElement) => {
     return tf.tidy(() => {
-      // Capture frame from video
-      let tensor = tf.browser.fromPixels(video);
+      // Capture frame from video or image
+      let tensor = tf.browser.fromPixels(imageElement);
       
       // Resize to 224x224 (MobileNetV2 input size)
       tensor = tf.image.resizeBilinear(tensor, [224, 224]);
@@ -176,19 +184,15 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
     });
   };
 
-  // Run prediction on current frame
-  const runPrediction = useCallback(async () => {
-    if (!model || !webcamRef.current?.video || !cameraReady) return;
-
-    const video = webcamRef.current.video;
-    
-    if (video.readyState !== 4) return;
+  // Run prediction on an image element
+  const runPredictionOnImage = useCallback(async (imageElement) => {
+    if (!model) return null;
 
     try {
       const startTime = performance.now();
       
       // Preprocess the image
-      const inputTensor = preprocessImage(video);
+      const inputTensor = preprocessImage(imageElement);
       
       // Run inference
       const predictions = await model.predict(inputTensor).data();
@@ -200,10 +204,9 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
       const maxIndex = predictions.indexOf(Math.max(...predictions));
       const confidence = predictions[maxIndex] * 100;
       
-      // For demo mode, simulate realistic predictions based on visual variance
-      // In production with a real model, you'd use actual predictions
-      const demoConfidence = 60 + Math.random() * 35; // 60-95% confidence
-      const demoIndex = Math.floor(Math.random() * 3); // Cycle through first few classes for demo
+      // For demo mode, simulate realistic predictions
+      const demoConfidence = 60 + Math.random() * 35;
+      const demoIndex = Math.floor(Math.random() * 3);
       
       const finalPrediction = {
         class: DISEASE_CLASSES[demoIndex],
@@ -214,30 +217,45 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
         })).sort((a, b) => b.probability - a.probability)
       };
       
-      setPrediction(finalPrediction);
-      setFrameCount(prev => prev + 1);
-      
       // Clean up tensor
       inputTensor.dispose();
       
+      return finalPrediction;
+      
     } catch (err) {
       console.error('Prediction error:', err);
+      return null;
     }
-  }, [model, cameraReady]);
+  }, [model]);
 
-  // Start scanning loop
+  // Run prediction on current camera frame
+  const runCameraPrediction = useCallback(async () => {
+    if (!model || !webcamRef.current?.video || !cameraReady) return;
+
+    const video = webcamRef.current.video;
+    
+    if (video.readyState !== 4) return;
+
+    const result = await runPredictionOnImage(video);
+    if (result) {
+      setPrediction(result);
+      setFrameCount(prev => prev + 1);
+    }
+  }, [model, cameraReady, runPredictionOnImage]);
+
+  // Start scanning loop for camera
   const startScanning = useCallback(() => {
     setIsScanning(true);
     
     const scanLoop = async () => {
-      await runPrediction();
+      await runCameraPrediction();
       animationRef.current = setTimeout(() => {
         requestAnimationFrame(scanLoop);
-      }, 500); // Run every 500ms
+      }, 500);
     };
     
     scanLoop();
-  }, [runPrediction]);
+  }, [runCameraPrediction]);
 
   // Stop scanning
   const stopScanning = useCallback(() => {
@@ -263,6 +281,78 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
     setCameraReady(true);
   };
 
+  // Handle file upload
+  const handleFileUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file');
+        return;
+      }
+      
+      // Create object URL for preview
+      const imageUrl = URL.createObjectURL(file);
+      setUploadedImage(file);
+      setUploadedImageUrl(imageUrl);
+      setPrediction(null);
+    }
+  };
+
+  // Analyze uploaded image
+  const analyzeUploadedImage = async () => {
+    if (!uploadedImageUrl || !model) return;
+    
+    setIsAnalyzing(true);
+    
+    // Wait for image to load
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = async () => {
+      const result = await runPredictionOnImage(img);
+      if (result) {
+        setPrediction(result);
+        setFrameCount(prev => prev + 1);
+      }
+      setIsAnalyzing(false);
+    };
+    
+    img.onerror = () => {
+      console.error('Failed to load image');
+      setIsAnalyzing(false);
+    };
+    
+    img.src = uploadedImageUrl;
+  };
+
+  // Clear uploaded image
+  const clearUploadedImage = () => {
+    if (uploadedImageUrl) {
+      URL.revokeObjectURL(uploadedImageUrl);
+    }
+    setUploadedImage(null);
+    setUploadedImageUrl(null);
+    setPrediction(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Switch input mode
+  const switchMode = (mode) => {
+    // Stop scanning if switching away from camera
+    if (inputMode === 'camera' && isScanning) {
+      stopScanning();
+    }
+    // Clear uploaded image if switching away from upload
+    if (inputMode === 'upload') {
+      clearUploadedImage();
+    }
+    setPrediction(null);
+    setInputMode(mode);
+  };
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -270,18 +360,21 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
         clearTimeout(animationRef.current);
         cancelAnimationFrame(animationRef.current);
       }
+      if (uploadedImageUrl) {
+        URL.revokeObjectURL(uploadedImageUrl);
+      }
     };
-  }, []);
+  }, [uploadedImageUrl]);
 
   const videoConstraints = {
     width: 640,
     height: 480,
-    facingMode: 'environment' // Use back camera on mobile
+    facingMode: 'environment'
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
+    <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="w-full max-w-4xl my-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
@@ -316,11 +409,43 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
           </button>
         </div>
 
+        {/* Mode Selector Tabs */}
+        {!isLoading && !error && (
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => switchMode('camera')}
+              className={`
+                flex-1 py-3 px-4 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300
+                ${inputMode === 'camera' 
+                  ? 'bg-neon-green/20 border-2 border-neon-green text-neon-green' 
+                  : 'bg-cyber-gray border-2 border-gray-700 text-gray-400 hover:border-gray-500'
+                }
+              `}
+            >
+              <Camera className="w-5 h-5" />
+              <span>Live Camera</span>
+            </button>
+            <button
+              onClick={() => switchMode('upload')}
+              className={`
+                flex-1 py-3 px-4 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300
+                ${inputMode === 'upload' 
+                  ? 'bg-neon-green/20 border-2 border-neon-green text-neon-green' 
+                  : 'bg-cyber-gray border-2 border-gray-700 text-gray-400 hover:border-gray-500'
+                }
+              `}
+            >
+              <Upload className="w-5 h-5" />
+              <span>Upload Image</span>
+            </button>
+          </div>
+        )}
+
         {/* Main Content */}
         <div className="grid md:grid-cols-3 gap-4">
-          {/* Camera Feed */}
+          {/* Image/Camera Feed */}
           <div className="md:col-span-2">
-            <div className="relative rounded-xl overflow-hidden border-2 border-neon-green/30 bg-cyber-gray">
+            <div className="relative rounded-xl overflow-hidden border-2 border-neon-green/30 bg-cyber-gray min-h-[300px]">
               {/* Loading State */}
               {isLoading && (
                 <div className="absolute inset-0 z-20 bg-cyber-black flex flex-col items-center justify-center">
@@ -350,82 +475,191 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                 </div>
               )}
 
-              {/* Webcam */}
-              {!error && (
-                <Webcam
-                  ref={webcamRef}
-                  audio={false}
-                  videoConstraints={videoConstraints}
-                  onUserMedia={handleCameraReady}
-                  className="w-full aspect-video object-cover"
-                  mirrored={false}
-                />
+              {/* Camera Mode */}
+              {!isLoading && !error && inputMode === 'camera' && (
+                <>
+                  <Webcam
+                    ref={webcamRef}
+                    audio={false}
+                    videoConstraints={videoConstraints}
+                    onUserMedia={handleCameraReady}
+                    className="w-full aspect-video object-cover"
+                    mirrored={false}
+                  />
+                  
+                  {/* Scanner Overlay */}
+                  {cameraReady && (
+                    <>
+                      {/* Corner brackets */}
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute top-3 left-3 w-12 h-12 border-l-2 border-t-2 border-neon-green" />
+                        <div className="absolute top-3 right-3 w-12 h-12 border-r-2 border-t-2 border-neon-green" />
+                        <div className="absolute bottom-3 left-3 w-12 h-12 border-l-2 border-b-2 border-neon-green" />
+                        <div className="absolute bottom-3 right-3 w-12 h-12 border-r-2 border-b-2 border-neon-green" />
+                      </div>
+
+                      {/* Scan line animation */}
+                      {isScanning && (
+                        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                          <div className="scan-line" />
+                        </div>
+                      )}
+
+                      {/* Status bar */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-4">
+                            <span className="flex items-center gap-2">
+                              <Activity className={`w-4 h-4 ${isScanning ? 'text-neon-green animate-pulse' : 'text-gray-500'}`} />
+                              <span className={isScanning ? 'text-neon-green' : 'text-gray-500'}>
+                                {isScanning ? 'SCANNING' : 'STANDBY'}
+                              </span>
+                            </span>
+                            <span className="text-gray-500">|</span>
+                            <span className="text-gray-400">Latency: {inferenceTime}ms</span>
+                            <span className="text-gray-500">|</span>
+                            <span className="text-gray-400">Frames: {frameCount}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </>
               )}
 
-              {/* Scanner Overlay */}
-              {!isLoading && !error && cameraReady && (
+              {/* Upload Mode */}
+              {!isLoading && !error && inputMode === 'upload' && (
                 <>
-                  {/* Corner brackets */}
-                  <div className="absolute inset-0 pointer-events-none scanner-corners scanner-corners-bottom">
-                    <div className="absolute top-3 left-3 w-12 h-12 border-l-2 border-t-2 border-neon-green" />
-                    <div className="absolute top-3 right-3 w-12 h-12 border-r-2 border-t-2 border-neon-green" />
-                    <div className="absolute bottom-3 left-3 w-12 h-12 border-l-2 border-b-2 border-neon-green" />
-                    <div className="absolute bottom-3 right-3 w-12 h-12 border-r-2 border-b-2 border-neon-green" />
-                  </div>
-
-                  {/* Scan line animation */}
-                  {isScanning && (
-                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                      <div className="scan-line" />
-                    </div>
-                  )}
-
-                  {/* Status bar */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-4">
-                        <span className="flex items-center gap-2">
-                          <Activity className={`w-4 h-4 ${isScanning ? 'text-neon-green animate-pulse' : 'text-gray-500'}`} />
-                          <span className={isScanning ? 'text-neon-green' : 'text-gray-500'}>
-                            {isScanning ? 'SCANNING' : 'STANDBY'}
-                          </span>
-                        </span>
-                        <span className="text-gray-500">|</span>
-                        <span className="text-gray-400">Latency: {inferenceTime}ms</span>
-                        <span className="text-gray-500">|</span>
-                        <span className="text-gray-400">Frames: {frameCount}</span>
+                  {!uploadedImageUrl ? (
+                    // Upload Drop Zone
+                    <label 
+                      htmlFor="image-upload"
+                      className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-neon-green/5 transition-all duration-300"
+                    >
+                      <div className="w-20 h-20 rounded-full bg-neon-green/10 border-2 border-dashed border-neon-green/50 flex items-center justify-center mb-4">
+                        <Upload className="w-8 h-8 text-neon-green" />
                       </div>
-                    </div>
-                  </div>
+                      <p className="text-neon-green font-semibold mb-2">Upload Crop Image</p>
+                      <p className="text-gray-500 text-sm text-center px-4">
+                        Click to browse or drag and drop<br />
+                        Supports JPG, PNG, WebP
+                      </p>
+                      <input
+                        ref={fileInputRef}
+                        id="image-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  ) : (
+                    // Uploaded Image Preview
+                    <>
+                      <img
+                        ref={imageRef}
+                        src={uploadedImageUrl}
+                        alt="Uploaded crop"
+                        className="w-full aspect-video object-contain bg-black"
+                      />
+                      
+                      {/* Corner brackets */}
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute top-3 left-3 w-12 h-12 border-l-2 border-t-2 border-neon-green" />
+                        <div className="absolute top-3 right-3 w-12 h-12 border-r-2 border-t-2 border-neon-green" />
+                        <div className="absolute bottom-3 left-3 w-12 h-12 border-l-2 border-b-2 border-neon-green" />
+                        <div className="absolute bottom-3 right-3 w-12 h-12 border-r-2 border-b-2 border-neon-green" />
+                      </div>
+
+                      {/* Analyzing overlay */}
+                      {isAnalyzing && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="neural-loader mx-auto mb-3" />
+                            <p className="text-neon-green font-semibold">Analyzing...</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Status bar */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-4">
+                            <span className="flex items-center gap-2">
+                              <ImageIcon className="w-4 h-4 text-neon-green" />
+                              <span className="text-neon-green">IMAGE LOADED</span>
+                            </span>
+                            {prediction && (
+                              <>
+                                <span className="text-gray-500">|</span>
+                                <span className="text-gray-400">Latency: {inferenceTime}ms</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </div>
 
             {/* Controls */}
-            {!isLoading && !error && cameraReady && (
+            {!isLoading && !error && (
               <div className="mt-4 flex justify-center gap-4">
-                <button
-                  onClick={toggleScanning}
-                  className={`
-                    px-8 py-3 rounded-lg font-semibold flex items-center gap-3 transition-all duration-300
-                    ${isScanning 
-                      ? 'bg-alert-red/20 border-2 border-alert-red text-alert-red hover:bg-alert-red/30' 
-                      : 'btn-neon'
-                    }
-                  `}
-                >
-                  {isScanning ? (
-                    <>
-                      <X className="w-5 h-5" />
-                      STOP SCAN
-                    </>
-                  ) : (
-                    <>
-                      <Camera className="w-5 h-5" />
-                      START SCAN
-                    </>
-                  )}
-                </button>
+                {inputMode === 'camera' && cameraReady && (
+                  <button
+                    onClick={toggleScanning}
+                    className={`
+                      px-8 py-3 rounded-lg font-semibold flex items-center gap-3 transition-all duration-300
+                      ${isScanning 
+                        ? 'bg-alert-red/20 border-2 border-alert-red text-alert-red hover:bg-alert-red/30' 
+                        : 'btn-neon'
+                      }
+                    `}
+                  >
+                    {isScanning ? (
+                      <>
+                        <X className="w-5 h-5" />
+                        STOP SCAN
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-5 h-5" />
+                        START SCAN
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {inputMode === 'upload' && uploadedImageUrl && (
+                  <>
+                    <button
+                      onClick={analyzeUploadedImage}
+                      disabled={isAnalyzing}
+                      className="px-8 py-3 rounded-lg font-semibold flex items-center gap-3 transition-all duration-300 btn-neon disabled:opacity-50"
+                    >
+                      {isAnalyzing ? (
+                        <>
+                          <RotateCcw className="w-5 h-5 animate-spin" />
+                          ANALYZING...
+                        </>
+                      ) : (
+                        <>
+                          <ZoomIn className="w-5 h-5" />
+                          ANALYZE IMAGE
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={clearUploadedImage}
+                      className="px-6 py-3 rounded-lg font-semibold flex items-center gap-3 transition-all duration-300 bg-gray-800 border-2 border-gray-600 text-gray-300 hover:border-alert-red hover:text-alert-red"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                      CLEAR
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -443,7 +677,10 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                 <div className="text-center py-8">
                   <ZoomIn className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                   <p className="text-gray-500">
-                    {isScanning ? 'Analyzing...' : 'Start scanning to detect diseases'}
+                    {inputMode === 'camera' 
+                      ? (isScanning ? 'Analyzing...' : 'Start scanning to detect diseases')
+                      : (uploadedImageUrl ? 'Click "Analyze Image" to detect' : 'Upload an image to analyze')
+                    }
                   </p>
                 </div>
               ) : (
