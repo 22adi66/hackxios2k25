@@ -17,52 +17,71 @@ import {
   Upload,
   Image as ImageIcon,
   RotateCcw,
-  Trash2
+  Trash2,
+  Volume2
 } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
+
+// Disease class keys for translation
+const DISEASE_KEYS = [
+  'healthy',
+  'earlyBlight',
+  'lateBlight',
+  'leafMold',
+  'septoriaLeafSpot',
+  'spiderMites',
+  'targetSpot',
+  'mosaicVirus',
+  'yellowLeafCurl',
+  'bacterialSpot'
+];
 
 // Disease classes that the model can detect
 const DISEASE_CLASSES = [
-  { id: 0, name: 'Healthy', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
-  { id: 1, name: 'Early Blight', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
-  { id: 2, name: 'Late Blight', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
-  { id: 3, name: 'Leaf Mold', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
-  { id: 4, name: 'Septoria Leaf Spot', severity: 'medium', color: 'text-yellow-500', bgColor: 'bg-yellow-500/20', borderColor: 'border-yellow-500' },
-  { id: 5, name: 'Spider Mites', severity: 'low', color: 'text-amber-400', bgColor: 'bg-amber-400/20', borderColor: 'border-amber-400' },
-  { id: 6, name: 'Target Spot', severity: 'medium', color: 'text-orange-500', bgColor: 'bg-orange-500/20', borderColor: 'border-orange-500' },
-  { id: 7, name: 'Mosaic Virus', severity: 'high', color: 'text-red-500', bgColor: 'bg-red-500/20', borderColor: 'border-red-500' },
-  { id: 8, name: 'Yellow Leaf Curl', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
-  { id: 9, name: 'Bacterial Spot', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
+  { id: 0, key: 'healthy', name: 'Healthy', severity: 'none', color: 'text-neon-green', bgColor: 'bg-neon-green/20', borderColor: 'border-neon-green' },
+  { id: 1, key: 'earlyBlight', name: 'Early Blight', severity: 'medium', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400' },
+  { id: 2, key: 'lateBlight', name: 'Late Blight', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
+  { id: 3, key: 'leafMold', name: 'Leaf Mold', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
+  { id: 4, key: 'septoriaLeafSpot', name: 'Septoria Leaf Spot', severity: 'medium', color: 'text-yellow-500', bgColor: 'bg-yellow-500/20', borderColor: 'border-yellow-500' },
+  { id: 5, key: 'spiderMites', name: 'Spider Mites', severity: 'low', color: 'text-amber-400', bgColor: 'bg-amber-400/20', borderColor: 'border-amber-400' },
+  { id: 6, key: 'targetSpot', name: 'Target Spot', severity: 'medium', color: 'text-orange-500', bgColor: 'bg-orange-500/20', borderColor: 'border-orange-500' },
+  { id: 7, key: 'mosaicVirus', name: 'Mosaic Virus', severity: 'high', color: 'text-red-500', bgColor: 'bg-red-500/20', borderColor: 'border-red-500' },
+  { id: 8, key: 'yellowLeafCurl', name: 'Yellow Leaf Curl', severity: 'high', color: 'text-alert-red', bgColor: 'bg-alert-red/20', borderColor: 'border-alert-red' },
+  { id: 9, key: 'bacterialSpot', name: 'Bacterial Spot', severity: 'medium', color: 'text-orange-400', bgColor: 'bg-orange-400/20', borderColor: 'border-orange-400' },
 ];
 
-// Treatment recommendations
-const TREATMENTS = {
-  'Healthy': 'No treatment needed. Continue regular care and monitoring.',
-  'Early Blight': 'Apply copper-based fungicide. Remove affected leaves. Ensure proper spacing.',
-  'Late Blight': 'URGENT: Apply fungicide immediately. Remove and destroy infected plants. Avoid overhead watering.',
-  'Leaf Mold': 'Improve air circulation. Apply fungicide. Reduce humidity levels.',
-  'Septoria Leaf Spot': 'Remove infected leaves. Apply fungicide. Avoid wetting foliage.',
-  'Spider Mites': 'Spray with neem oil or insecticidal soap. Increase humidity around plants.',
-  'Target Spot': 'Apply fungicide. Remove debris. Practice crop rotation.',
-  'Mosaic Virus': 'No cure available. Remove infected plants. Control aphids that spread the virus.',
-  'Yellow Leaf Curl': 'Control whitefly population. Remove infected plants. Use resistant varieties.',
-  'Bacterial Spot': 'Apply copper spray. Avoid overhead irrigation. Remove infected material.',
+// Treatment key mapping for translations
+const TREATMENT_KEYS = {
+  'Healthy': 'healthy',
+  'Early Blight': 'earlyBlight',
+  'Late Blight': 'lateBlight',
+  'Leaf Mold': 'leafMold',
+  'Septoria Leaf Spot': 'septoriaLeafSpot',
+  'Spider Mites': 'spiderMites',
+  'Target Spot': 'targetSpot',
+  'Mosaic Virus': 'mosaicVirus',
+  'Yellow Leaf Curl': 'yellowLeafCurl',
+  'Bacterial Spot': 'bacterialSpot',
 };
 
 export default function FarmGuardScanner({ onClose, isOfflineMode }) {
+  const { t, speak, isSpeechSupported, language } = useLanguage();
   const webcamRef = useRef(null);
   const fileInputRef = useRef(null);
   const imageRef = useRef(null);
   const animationRef = useRef(null);
+  const lastAnnouncedPrediction = useRef(null);
   
   // Input mode: 'camera' or 'upload'
   const [inputMode, setInputMode] = useState('camera');
   const [uploadedImage, setUploadedImage] = useState(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+  const [voiceAlertsEnabled, setVoiceAlertsEnabled] = useState(true);
   
   const [model, setModel] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [loadingMessage, setLoadingMessage] = useState('Initializing Neural Network...');
+  const [loadingMessage, setLoadingMessage] = useState('initializingNeuralNet');
   const [error, setError] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -71,13 +90,56 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
   const [frameCount, setFrameCount] = useState(0);
   const [cameraReady, setCameraReady] = useState(false);
 
+  // Speak detection result
+  const announceResult = useCallback((pred) => {
+    if (!voiceAlertsEnabled || !isSpeechSupported || !pred) return;
+    
+    // Don't repeat the same announcement
+    if (lastAnnouncedPrediction.current === pred.class.name) return;
+    lastAnnouncedPrediction.current = pred.class.name;
+    
+    const diseaseName = t(pred.class.key);
+    const confidence = Math.round(pred.confidence);
+    const severity = t(pred.class.severity);
+    const treatment = t(`treatments.${pred.class.key}`);
+    
+    // Build announcement message based on language
+    let message = '';
+    if (language === 'en') {
+      message = pred.class.severity === 'none'
+        ? `Good news! Your crop is healthy with ${confidence}% confidence.`
+        : `Alert! ${diseaseName} detected with ${confidence}% confidence. Severity: ${severity}. Treatment: ${treatment}`;
+    } else if (language === 'hi') {
+      message = pred.class.severity === 'none'
+        ? `शुभ समाचार! आपकी फसल ${confidence}% विश्वास के साथ स्वस्थ है।`
+        : `चेतावनी! ${diseaseName} का पता चला, विश्वास ${confidence}%। गंभीरता: ${severity}। उपचार: ${treatment}`;
+    } else if (language === 'te') {
+      message = pred.class.severity === 'none'
+        ? `శుభవార్త! మీ పంట ${confidence}% విశ్వాసంతో ఆరోగ్యంగా ఉంది.`
+        : `హెచ్చరిక! ${diseaseName} కనుగొనబడింది, విశ్వాసం ${confidence}%। తీవ్రత: ${severity}। చికిత్స: ${treatment}`;
+    } else if (language === 'ta') {
+      message = pred.class.severity === 'none'
+        ? `நல்ல செய்தி! உங்கள் பயிர் ${confidence}% நம்பிக்கையுடன் ஆரோக்கியமாக உள்ளது.`
+        : `எச்சரிக்கை! ${diseaseName} கண்டறியப்பட்டது, நம்பிக்கை ${confidence}%। தீவிரம்: ${severity}। சிகிச்சை: ${treatment}`;
+    }
+    
+    speak(message);
+  }, [voiceAlertsEnabled, isSpeechSupported, t, speak, language]);
+
+  // Effect to announce predictions
+  useEffect(() => {
+    if (prediction && !isScanning) {
+      announceResult(prediction);
+    }
+  }, [prediction, isScanning, announceResult]);
+
   // Initialize TensorFlow.js and load model
   useEffect(() => {
     let isMounted = true;
 
     const initializeTensorFlow = async () => {
       try {
-        setLoadingMessage('Setting up TensorFlow.js...');
+        setLoadingMessage('settingUpTensorflow');
         setLoadingProgress(10);
         
         // Set backend to WebGL for GPU acceleration
@@ -86,7 +148,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
         
         if (!isMounted) return;
         setLoadingProgress(30);
-        setLoadingMessage('Loading MobileNetV2 Model...');
+        setLoadingMessage('loadingModel');
 
         // Try to load custom model, fall back to demo mode
         let loadedModel = null;
@@ -95,11 +157,11 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
           // Attempt to load the model from public/model folder
           loadedModel = await tf.loadLayersModel('/model/model.json');
           setLoadingProgress(90);
-          setLoadingMessage('Model loaded successfully!');
+          setLoadingMessage('modelLoaded');
         } catch (modelError) {
           console.log('Custom model not found, using demo mode:', modelError);
           setLoadingProgress(70);
-          setLoadingMessage('Demo mode: Simulating AI detection...');
+          setLoadingMessage('demoMode');
           
           // Create a simple demo model for demonstration
           loadedModel = await createDemoModel();
@@ -109,13 +171,13 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
         if (!isMounted) return;
         
         // Warm up the model with a dummy tensor
-        setLoadingMessage('Warming up neural network...');
+        setLoadingMessage('warmingUp');
         const warmupTensor = tf.zeros([1, 224, 224, 3]);
         await loadedModel.predict(warmupTensor).data();
         warmupTensor.dispose();
         
         setLoadingProgress(100);
-        setLoadingMessage('Ready for diagnosis!');
+        setLoadingMessage('readyForDiagnosis');
         
         setTimeout(() => {
           if (isMounted) {
@@ -127,7 +189,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
       } catch (err) {
         console.error('TensorFlow initialization error:', err);
         if (isMounted) {
-          setError('Failed to initialize AI engine. Please refresh and try again.');
+          setError('initError');
           setIsLoading(false);
         }
       }
@@ -386,27 +448,46 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                 className="text-xl font-bold text-neon-green"
                 style={{ fontFamily: 'Orbitron, sans-serif' }}
               >
-                AI SCANNER
+                {t('aiScanner')}
               </h2>
               <p className="text-gray-400 text-sm flex items-center gap-2">
                 {isOfflineMode && (
                   <>
                     <WifiOff className="w-4 h-4 text-alert-red" />
-                    <span className="text-alert-red">Offline Mode</span>
+                    <span className="text-alert-red">{t('offlineMode')}</span>
                     <span className="text-gray-600">|</span>
                   </>
                 )}
-                <span>MobileNetV2 Neural Network</span>
+                <span>{t('mobileNet')}</span>
               </p>
             </div>
           </div>
           
-          <button
-            onClick={onClose}
-            className="w-10 h-10 rounded-lg border border-gray-700 hover:border-alert-red hover:bg-alert-red/20 flex items-center justify-center transition-all duration-300"
-          >
-            <X className="w-5 h-5 text-gray-400 hover:text-alert-red" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Voice Alert Toggle */}
+            {isSpeechSupported && (
+              <button
+                onClick={() => setVoiceAlertsEnabled(!voiceAlertsEnabled)}
+                className={`
+                  w-10 h-10 rounded-lg border flex items-center justify-center transition-all duration-300
+                  ${voiceAlertsEnabled 
+                    ? 'border-neon-green bg-neon-green/20 text-neon-green' 
+                    : 'border-gray-700 bg-gray-800 text-gray-500'
+                  }
+                `}
+                title={voiceAlertsEnabled ? 'Disable voice alerts' : 'Enable voice alerts'}
+              >
+                <Volume2 className="w-5 h-5" />
+              </button>
+            )}
+            
+            <button
+              onClick={onClose}
+              className="w-10 h-10 rounded-lg border border-gray-700 hover:border-alert-red hover:bg-alert-red/20 flex items-center justify-center transition-all duration-300"
+            >
+              <X className="w-5 h-5 text-gray-400 hover:text-alert-red" />
+            </button>
+          </div>
         </div>
 
         {/* Mode Selector Tabs */}
@@ -423,7 +504,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
               `}
             >
               <Camera className="w-5 h-5" />
-              <span>Live Camera</span>
+              <span>{t('liveCamera')}</span>
             </button>
             <button
               onClick={() => switchMode('upload')}
@@ -436,7 +517,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
               `}
             >
               <Upload className="w-5 h-5" />
-              <span>Upload Image</span>
+              <span>{t('uploadImage')}</span>
             </button>
           </div>
         )}
@@ -450,7 +531,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
               {isLoading && (
                 <div className="absolute inset-0 z-20 bg-cyber-black flex flex-col items-center justify-center">
                   <div className="neural-loader mb-4" />
-                  <p className="text-neon-green font-semibold mb-2">{loadingMessage}</p>
+                  <p className="text-neon-green font-semibold mb-2">{t(loadingMessage)}</p>
                   <div className="w-48 h-2 bg-gray-800 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-neon-green transition-all duration-300"
@@ -465,12 +546,12 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
               {error && (
                 <div className="absolute inset-0 z-20 bg-cyber-black flex flex-col items-center justify-center p-4">
                   <AlertTriangle className="w-16 h-16 text-alert-red mb-4" />
-                  <p className="text-alert-red text-center">{error}</p>
+                  <p className="text-alert-red text-center">{t(error)}</p>
                   <button
                     onClick={() => window.location.reload()}
                     className="mt-4 px-4 py-2 border border-neon-green text-neon-green rounded-lg hover:bg-neon-green/20"
                   >
-                    Retry
+                    {t('retry')}
                   </button>
                 </div>
               )}
@@ -512,13 +593,13 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                             <span className="flex items-center gap-2">
                               <Activity className={`w-4 h-4 ${isScanning ? 'text-neon-green animate-pulse' : 'text-gray-500'}`} />
                               <span className={isScanning ? 'text-neon-green' : 'text-gray-500'}>
-                                {isScanning ? 'SCANNING' : 'STANDBY'}
+                                {isScanning ? t('scanning') : t('standby')}
                               </span>
                             </span>
                             <span className="text-gray-500">|</span>
-                            <span className="text-gray-400">Latency: {inferenceTime}ms</span>
+                            <span className="text-gray-400">{t('latency')}: {inferenceTime}ms</span>
                             <span className="text-gray-500">|</span>
-                            <span className="text-gray-400">Frames: {frameCount}</span>
+                            <span className="text-gray-400">{t('frames')}: {frameCount}</span>
                           </div>
                         </div>
                       </div>
@@ -539,10 +620,10 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                       <div className="w-20 h-20 rounded-full bg-neon-green/10 border-2 border-dashed border-neon-green/50 flex items-center justify-center mb-4">
                         <Upload className="w-8 h-8 text-neon-green" />
                       </div>
-                      <p className="text-neon-green font-semibold mb-2">Upload Crop Image</p>
+                      <p className="text-neon-green font-semibold mb-2">{t('uploadCropImage')}</p>
                       <p className="text-gray-500 text-sm text-center px-4">
-                        Click to browse or drag and drop<br />
-                        Supports JPG, PNG, WebP
+                        {t('uploadHint')}<br />
+                        {t('supportsFormats')}
                       </p>
                       <input
                         ref={fileInputRef}
@@ -587,12 +668,12 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                           <div className="flex items-center gap-4">
                             <span className="flex items-center gap-2">
                               <ImageIcon className="w-4 h-4 text-neon-green" />
-                              <span className="text-neon-green">IMAGE LOADED</span>
+                              <span className="text-neon-green">{t('imageLoaded')}</span>
                             </span>
                             {prediction && (
                               <>
                                 <span className="text-gray-500">|</span>
-                                <span className="text-gray-400">Latency: {inferenceTime}ms</span>
+                                <span className="text-gray-400">{t('latency')}: {inferenceTime}ms</span>
                               </>
                             )}
                           </div>
@@ -621,12 +702,12 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                     {isScanning ? (
                       <>
                         <X className="w-5 h-5" />
-                        STOP SCAN
+                        {t('stopScan')}
                       </>
                     ) : (
                       <>
                         <Camera className="w-5 h-5" />
-                        START SCAN
+                        {t('startScan')}
                       </>
                     )}
                   </button>
@@ -642,12 +723,12 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                       {isAnalyzing ? (
                         <>
                           <RotateCcw className="w-5 h-5 animate-spin" />
-                          ANALYZING...
+                          {t('analyzing')}
                         </>
                       ) : (
                         <>
                           <ZoomIn className="w-5 h-5" />
-                          ANALYZE IMAGE
+                          {t('analyzeImage')}
                         </>
                       )}
                     </button>
@@ -656,7 +737,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                       className="px-6 py-3 rounded-lg font-semibold flex items-center gap-3 transition-all duration-300 bg-gray-800 border-2 border-gray-600 text-gray-300 hover:border-alert-red hover:text-alert-red"
                     >
                       <Trash2 className="w-5 h-5" />
-                      CLEAR
+                      {t('clear')}
                     </button>
                   </>
                 )}
@@ -670,7 +751,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
             <div className="cyber-card cyber-card-glow rounded-xl p-4">
               <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
                 <Leaf className="w-4 h-4" />
-                Detection Result
+                {t('detectionResult')}
               </h3>
               
               {!prediction ? (
@@ -678,8 +759,8 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                   <ZoomIn className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                   <p className="text-gray-500">
                     {inputMode === 'camera' 
-                      ? (isScanning ? 'Analyzing...' : 'Start scanning to detect diseases')
-                      : (uploadedImageUrl ? 'Click "Analyze Image" to detect' : 'Upload an image to analyze')
+                      ? (isScanning ? t('analyzing') : t('startScanningToDetect'))
+                      : (uploadedImageUrl ? t('clickAnalyze') : t('uploadToAnalyze'))
                     }
                   </p>
                 </div>
@@ -691,7 +772,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                 `}>
                   <div className="flex items-center justify-between mb-2">
                     <span className={`text-lg font-bold ${prediction.class.color}`}>
-                      {prediction.class.name}
+                      {t(prediction.class.key)}
                     </span>
                     {prediction.class.severity === 'none' ? (
                       <CheckCircle className="w-6 h-6 text-neon-green" />
@@ -702,7 +783,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                   
                   <div className="mb-3">
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-400">Confidence</span>
+                      <span className="text-gray-400">{t('confidence')}</span>
                       <span className={prediction.class.color}>
                         {prediction.confidence.toFixed(1)}%
                       </span>
@@ -720,7 +801,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
 
                   {prediction.class.severity !== 'none' && (
                     <div className="text-xs text-gray-400 uppercase tracking-wider">
-                      Severity: <span className={prediction.class.color}>{prediction.class.severity}</span>
+                      {t('severity')}: <span className={prediction.class.color}>{t(prediction.class.severity)}</span>
                     </div>
                   )}
                 </div>
@@ -732,11 +813,22 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
               <div className="cyber-card cyber-card-glow rounded-xl p-4">
                 <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
                   <Settings className="w-4 h-4" />
-                  Treatment
+                  {t('treatment')}
                 </h3>
                 <p className="text-gray-300 text-sm leading-relaxed">
-                  {TREATMENTS[prediction.class.name]}
+                  {t(`treatments.${prediction.class.key}`)}
                 </p>
+                
+                {/* Voice Announcement Button */}
+                {isSpeechSupported && (
+                  <button
+                    onClick={() => announceResult(prediction)}
+                    className="mt-3 w-full py-2 rounded-lg border border-neon-green/30 bg-neon-green/10 text-neon-green text-sm flex items-center justify-center gap-2 hover:bg-neon-green/20 transition-all duration-300"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                    🔊 {language === 'en' ? 'Read Aloud' : language === 'hi' ? 'सुनें' : language === 'te' ? 'వినండి' : 'கேளுங்கள்'}
+                  </button>
+                )}
               </div>
             )}
 
@@ -745,12 +837,12 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
               <div className="cyber-card cyber-card-glow rounded-xl p-4">
                 <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
                   <Activity className="w-4 h-4" />
-                  All Classes
+                  {t('allClasses')}
                 </h3>
                 <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
                   {prediction.allPredictions.slice(0, 5).map((pred, idx) => (
                     <div key={idx} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-400 truncate">{pred.name}</span>
+                      <span className="text-gray-400 truncate">{t(pred.key)}</span>
                       <span className={pred.color}>{pred.probability.toFixed(1)}%</span>
                     </div>
                   ))}

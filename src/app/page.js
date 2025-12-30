@@ -16,12 +16,15 @@ import {
   Database
 } from 'lucide-react';
 import FarmGuardScanner from '@/components/FarmGuardScanner';
+import LanguageSelector from '@/components/LanguageSelector';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Home() {
   const [isOffline, setIsOffline] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
-  const [modelStatus, setModelStatus] = useState('Ready');
+  const [modelStatus, setModelStatus] = useState('ready');
   const [currentTime, setCurrentTime] = useState('');
+  const { t, isLoaded, language } = useLanguage();
 
   // Update time display
   useEffect(() => {
@@ -50,29 +53,41 @@ export default function Home() {
   const stats = [
     { 
       icon: Cpu, 
-      label: 'Neural Engine', 
-      value: modelStatus,
+      label: t('neuralEngine'), 
+      value: t(modelStatus),
       color: 'text-neon-green' 
     },
     { 
       icon: Clock, 
-      label: 'Inference Latency', 
+      label: t('inferenceLatency'), 
       value: '~200ms',
       color: 'text-neon-green' 
     },
     { 
       icon: Database, 
-      label: 'Model Size', 
+      label: t('modelSize'), 
       value: '4.2 MB',
       color: 'text-neon-green' 
     },
     { 
       icon: Shield, 
-      label: 'Privacy', 
-      value: '100% Local',
+      label: t('privacy'), 
+      value: t('local'),
       color: 'text-neon-green' 
     },
   ];
+
+  // Show loading state until language is loaded
+  if (!isLoaded) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-neon-green/30 border-t-neon-green rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-neon-green">Loading...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen p-4 md:p-8">
@@ -92,23 +107,26 @@ export default function Home() {
                 className="text-3xl md:text-4xl font-bold tracking-wider text-glow"
                 style={{ fontFamily: 'Orbitron, sans-serif' }}
               >
-                FARMGUARD
+                {t('appName')}
               </h1>
               <p className="text-neon-green/70 text-sm tracking-widest uppercase">
-                Edge AI Crop Diagnostics
+                {t('tagline')}
               </p>
             </div>
           </div>
 
-          {/* System Time */}
-          <div className="cyber-card cyber-card-glow rounded-lg px-4 py-2">
-            <p className="text-xs text-gray-400 uppercase tracking-wider">System Time</p>
-            <p 
-              className="text-xl text-neon-green font-mono"
-              style={{ fontFamily: 'JetBrains Mono, monospace' }}
-            >
-              {currentTime}
-            </p>
+          {/* Language Selector & System Time */}
+          <div className="flex items-center gap-4">
+            <LanguageSelector />
+            <div className="cyber-card cyber-card-glow rounded-lg px-4 py-2">
+              <p className="text-xs text-gray-400 uppercase tracking-wider">{t('systemTime')}</p>
+              <p 
+                className="text-xl text-neon-green font-mono"
+                style={{ fontFamily: 'JetBrains Mono, monospace' }}
+              >
+                {currentTime}
+              </p>
+            </div>
           </div>
         </div>
       </header>
@@ -124,19 +142,19 @@ export default function Home() {
                   {isOffline ? (
                     <>
                       <WifiOff className="w-5 h-5 text-alert-red" />
-                      <span className="text-alert-red">Offline Mode Active</span>
+                      <span className="text-alert-red">{t('offlineActive')}</span>
                     </>
                   ) : (
                     <>
                       <Wifi className="w-5 h-5 text-neon-green" />
-                      <span className="text-neon-green">Online Mode</span>
+                      <span className="text-neon-green">{t('onlineMode')}</span>
                     </>
                   )}
                 </h3>
                 <p className="text-gray-400 text-sm">
                   {isOffline 
-                    ? 'AI runs 100% locally - No internet required!' 
-                    : 'Toggle to simulate offline environment for demo'}
+                    ? t('offlineDescription')
+                    : t('toggleOfflineDesc')}
                 </p>
               </div>
             </div>
@@ -153,7 +171,7 @@ export default function Home() {
               `}
             >
               <span className="text-xl">{isOffline ? '📴' : '📶'}</span>
-              <span>Simulate Offline Mode</span>
+              <span>{t('simulateOffline')}</span>
             </button>
           </div>
 
@@ -162,9 +180,9 @@ export default function Home() {
             <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-alert-red/10 to-transparent border border-alert-red/30 flex items-center gap-3">
               <AlertTriangle className="w-6 h-6 text-alert-red flex-shrink-0" />
               <div>
-                <p className="text-alert-red font-semibold">Offline Mode Simulation Active</p>
+                <p className="text-alert-red font-semibold">{t('offlineActive')}</p>
                 <p className="text-gray-400 text-sm">
-                  The AI model is running entirely in your browser. Zero cloud dependency!
+                  {t('offlineDescription')}
                 </p>
               </div>
               <CheckCircle className="w-6 h-6 text-neon-green ml-auto flex-shrink-0" />
@@ -179,7 +197,7 @@ export default function Home() {
           className="text-xl font-bold mb-4 tracking-wider text-gray-300"
           style={{ fontFamily: 'Orbitron, sans-serif' }}
         >
-          SYSTEM STATUS
+          {t('systemStatus')}
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((stat, index) => (
@@ -214,19 +232,18 @@ export default function Home() {
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neon-green/10 border border-neon-green/30 mb-6">
               <Activity className="w-4 h-4 text-neon-green animate-pulse" />
-              <span className="text-neon-green text-sm font-medium">AI Engine Standing By</span>
+              <span className="text-neon-green text-sm font-medium">{t('aiEngineStandby')}</span>
             </div>
 
             <h2 
               className="text-2xl md:text-3xl font-bold mb-4 text-glow-sm"
               style={{ fontFamily: 'Orbitron, sans-serif' }}
             >
-              CROP DISEASE DETECTION
+              {t('cropDiseaseDetection')}
             </h2>
             
             <p className="text-gray-400 mb-8 max-w-lg mx-auto">
-              Point your camera at any crop leaf. Our MobileNetV2 neural network will analyze 
-              and detect diseases in real-time — completely offline.
+              {t('scanDescription')}
             </p>
 
             <button
@@ -234,22 +251,22 @@ export default function Home() {
               className="btn-neon text-lg md:text-xl px-8 md:px-12 py-4 rounded-lg inline-flex items-center gap-4"
             >
               <Camera className="w-6 h-6" />
-              <span>START DIAGNOSIS</span>
+              <span>{t('startDiagnosis')}</span>
               <Zap className="w-6 h-6" />
             </button>
 
-            <div className="mt-6 flex items-center justify-center gap-6 text-sm text-gray-500">
+            <div className="mt-6 flex items-center justify-center gap-6 text-sm text-gray-500 flex-wrap">
               <span className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-neon-green" />
-                No upload required
+                {t('noUploadRequired')}
               </span>
               <span className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-neon-green" />
-                Instant results
+                {t('instantResults')}
               </span>
               <span className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-neon-green" />
-                Works offline
+                {t('worksOffline')}
               </span>
             </div>
           </div>
@@ -262,23 +279,23 @@ export default function Home() {
           className="text-xl font-bold mb-4 tracking-wider text-gray-300"
           style={{ fontFamily: 'Orbitron, sans-serif' }}
         >
-          WHY FARMGUARD?
+          {t('whyFarmguard')}
         </h2>
         <div className="grid md:grid-cols-3 gap-4">
           <FeatureCard 
             icon={WifiOff}
-            title="100% Offline"
-            description="No internet? No problem. Edge AI runs entirely in your browser."
+            title={t('offlineFeature')}
+            description={t('offlineFeatureDesc')}
           />
           <FeatureCard 
             icon={Zap}
-            title="Instant Detection"
-            description="Real-time analysis with sub-second inference latency."
+            title={t('instantDetection')}
+            description={t('instantDetectionDesc')}
           />
           <FeatureCard 
             icon={Shield}
-            title="Privacy First"
-            description="Your images never leave your device. Complete data privacy."
+            title={t('privacyFirst')}
+            description={t('privacyFirstDesc')}
           />
         </div>
       </section>
@@ -286,10 +303,10 @@ export default function Home() {
       {/* FOOTER */}
       <footer className="text-center py-8 border-t border-gray-800">
         <p className="text-gray-500 text-sm">
-          🌱 FarmGuard AI — Built for Farmers, Powered by Edge AI
+          🌱 {t('footerText')}
         </p>
         <p className="text-gray-600 text-xs mt-2">
-          Hackathon 2025 | Best Innovation Entry
+          {t('hackathon')}
         </p>
       </footer>
 
