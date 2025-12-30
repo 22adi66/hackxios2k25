@@ -169,7 +169,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
     const cropName = pred.class.crop || '';
     const confidence = Math.round(pred.confidence);
     const severity = pred.class.severity !== 'none' ? pred.class.severity : '';
-    const treatment = TREATMENTS[pred.class.key] || 'Continue monitoring your crop.';
+    const treatment = t(`treatments.${pred.class.key}`) || TREATMENTS[pred.class.key] || 'Continue monitoring your crop.';
     
     // Get severity emoji
     const severityEmoji = pred.class.severity === 'high' ? '🔴' : 
@@ -291,7 +291,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
     const cropName = pred.class.crop || 'crop';
     const confidence = Math.round(pred.confidence);
     const severity = pred.class.severity;
-    const treatment = TREATMENTS[pred.class.key] || 'Continue monitoring.';
+    const treatment = t(`treatments.${pred.class.key}`) || TREATMENTS[pred.class.key] || 'Continue monitoring.';
     
     // Build announcement message based on language
     const isHealthy = pred.class.severity === 'none';
@@ -1046,7 +1046,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                   {t('treatment')}
                 </h3>
                 <p className="text-gray-300 text-sm leading-relaxed">
-                  {TREATMENTS[prediction.class.key] || 'Continue monitoring your crop.'}
+                  {t(`treatments.${prediction.class.key}`) || TREATMENTS[prediction.class.key] || 'Continue monitoring your crop.'}
                 </p>
                 
                 {/* Voice Announcement Button */}
