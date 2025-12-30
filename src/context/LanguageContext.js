@@ -80,8 +80,10 @@ export function LanguageProvider({ children }) {
     const langMap = {
       en: 'en-US',
       hi: 'hi-IN',
+      pa: 'pa-IN',
       te: 'te-IN',
-      ta: 'ta-IN'
+      ta: 'ta-IN',
+      kn: 'kn-IN'
     };
     
     utterance.lang = langMap[language] || 'en-US';

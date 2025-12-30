@@ -121,6 +121,14 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
       message = pred.class.severity === 'none'
         ? `நல்ல செய்தி! உங்கள் பயிர் ${confidence}% நம்பிக்கையுடன் ஆரோக்கியமாக உள்ளது.`
         : `எச்சரிக்கை! ${diseaseName} கண்டறியப்பட்டது, நம்பிக்கை ${confidence}%। தீவிரம்: ${severity}। சிகிச்சை: ${treatment}`;
+    } else if (language === 'pa') {
+      message = pred.class.severity === 'none'
+        ? `ਖੁਸ਼ਖਬਰੀ! ਤੁਹਾਡੀ ਫਸਲ ${confidence}% ਭਰੋਸੇ ਨਾਲ ਸਿਹਤਮੰਦ ਹੈ।`
+        : `ਚੇਤਾਵਨੀ! ${diseaseName} ਮਿਲਿਆ, ਭਰੋਸਾ ${confidence}%। ਗੰਭੀਰਤਾ: ${severity}। ਇਲਾਜ: ${treatment}`;
+    } else if (language === 'kn') {
+      message = pred.class.severity === 'none'
+        ? `ಶುಭ ಸುದ್ದಿ! ನಿಮ್ಮ ಬೆಳೆ ${confidence}% ವಿಶ್ವಾಸದೊಂದಿಗೆ ಆರೋಗ್ಯಕರವಾಗಿದೆ.`
+        : `ಎಚ್ಚರಿಕೆ! ${diseaseName} ಪತ್ತೆಯಾಗಿದೆ, ವಿಶ್ವಾಸ ${confidence}%। ತೀವ್ರತೆ: ${severity}। ಚಿಕಿತ್ಸೆ: ${treatment}`;
     }
     
     speak(message);
@@ -826,7 +834,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode }) {
                     className="mt-3 w-full py-2 rounded-lg border border-neon-green/30 bg-neon-green/10 text-neon-green text-sm flex items-center justify-center gap-2 hover:bg-neon-green/20 transition-all duration-300"
                   >
                     <Volume2 className="w-4 h-4" />
-                    🔊 {language === 'en' ? 'Read Aloud' : language === 'hi' ? 'सुनें' : language === 'te' ? 'వినండి' : 'கேளுங்கள்'}
+                    🔊 {language === 'en' ? 'Read Aloud' : language === 'hi' ? 'सुनें' : language === 'te' ? 'వినండి' : language === 'ta' ? 'கேளுங்கள்' : language === 'pa' ? 'ਸੁਣੋ' : language === 'kn' ? 'ಕೇಳಿ' : 'Read Aloud'}
                   </button>
                 )}
               </div>
