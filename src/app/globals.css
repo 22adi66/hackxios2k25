@@ -1,0 +1,319 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   FARMGUARD AI - CYBERPUNK AGRI-TECH THEME
+   ============================================ */
+
+:root {
+  --neon-green: #39FF14;
+  --neon-green-rgb: 57, 255, 20;
+  --cyber-black: #0a0a0a;
+  --cyber-gray: #1a1a1a;
+  --alert-red: #FF3131;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--cyber-black);
+  color: #ffffff;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cyber-gray);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--neon-green);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #32CD32;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.text-glow {
+  text-shadow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green), 0 0 30px var(--neon-green);
+}
+
+.text-glow-sm {
+  text-shadow: 0 0 5px var(--neon-green), 0 0 10px var(--neon-green);
+}
+
+.box-glow {
+  box-shadow: 0 0 10px var(--neon-green), 0 0 20px rgba(var(--neon-green-rgb), 0.5);
+}
+
+.box-glow-red {
+  box-shadow: 0 0 10px var(--alert-red), 0 0 20px rgba(255, 49, 49, 0.5);
+}
+
+/* ============================================
+   SCANNER OVERLAY EFFECTS
+   ============================================ */
+
+.scanner-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.scan-line {
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    var(--neon-green), 
+    transparent
+  );
+  animation: scanLine 2s linear infinite;
+  box-shadow: 0 0 20px var(--neon-green), 0 0 40px var(--neon-green);
+}
+
+@keyframes scanLine {
+  0% { top: -4px; }
+  100% { top: 100%; }
+}
+
+/* Corner brackets for scanner */
+.scanner-corners::before,
+.scanner-corners::after {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--neon-green);
+}
+
+.scanner-corners::before {
+  top: 10px;
+  left: 10px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.scanner-corners::after {
+  top: 10px;
+  right: 10px;
+  border-left: none;
+  border-bottom: none;
+}
+
+.scanner-corners-bottom::before,
+.scanner-corners-bottom::after {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--neon-green);
+}
+
+.scanner-corners-bottom::before {
+  bottom: 10px;
+  left: 10px;
+  border-right: none;
+  border-top: none;
+}
+
+.scanner-corners-bottom::after {
+  bottom: 10px;
+  right: 10px;
+  border-left: none;
+  border-top: none;
+}
+
+/* ============================================
+   BUTTON STYLES
+   ============================================ */
+
+.btn-neon {
+  position: relative;
+  background: transparent;
+  border: 2px solid var(--neon-green);
+  color: var(--neon-green);
+  padding: 1rem 2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.btn-neon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--neon-green);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: -1;
+}
+
+.btn-neon:hover {
+  color: var(--cyber-black);
+  box-shadow: 0 0 20px var(--neon-green), 0 0 40px var(--neon-green);
+}
+
+.btn-neon:hover::before {
+  transform: translateX(0);
+}
+
+.btn-neon:active {
+  transform: scale(0.98);
+}
+
+/* ============================================
+   CARD STYLES
+   ============================================ */
+
+.cyber-card {
+  background: linear-gradient(135deg, rgba(26, 26, 26, 0.9), rgba(10, 10, 10, 0.95));
+  border: 1px solid rgba(57, 255, 20, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.cyber-card-glow {
+  box-shadow: 
+    inset 0 0 20px rgba(57, 255, 20, 0.05),
+    0 0 20px rgba(57, 255, 20, 0.1);
+}
+
+/* ============================================
+   GRID BACKGROUND
+   ============================================ */
+
+.grid-bg {
+  background-image: 
+    linear-gradient(rgba(57, 255, 20, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(57, 255, 20, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* ============================================
+   ALERT CARD
+   ============================================ */
+
+.alert-card {
+  background: linear-gradient(135deg, rgba(255, 49, 49, 0.2), rgba(255, 49, 49, 0.1));
+  border: 2px solid var(--alert-red);
+  animation: alertPulse 1s ease-in-out infinite;
+}
+
+@keyframes alertPulse {
+  0%, 100% { box-shadow: 0 0 10px var(--alert-red); }
+  50% { box-shadow: 0 0 30px var(--alert-red), 0 0 50px var(--alert-red); }
+}
+
+/* ============================================
+   LOADING SPINNER
+   ============================================ */
+
+.neural-loader {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(57, 255, 20, 0.2);
+  border-top-color: var(--neon-green);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   STATUS INDICATORS
+   ============================================ */
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.status-dot.online {
+  background: var(--neon-green);
+  box-shadow: 0 0 10px var(--neon-green);
+}
+
+.status-dot.offline {
+  background: var(--alert-red);
+  box-shadow: 0 0 10px var(--alert-red);
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ============================================
+   TOGGLE SWITCH
+   ============================================ */
+
+.toggle-switch {
+  position: relative;
+  width: 60px;
+  height: 30px;
+  background: var(--cyber-gray);
+  border: 2px solid rgba(57, 255, 20, 0.5);
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: var(--neon-green);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px var(--neon-green);
+}
+
+.toggle-switch.active {
+  background: rgba(57, 255, 20, 0.2);
+  border-color: var(--neon-green);
+}
+
+.toggle-switch.active::after {
+  left: calc(100% - 23px);
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 768px) {
+  .btn-neon {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+  }
+}
