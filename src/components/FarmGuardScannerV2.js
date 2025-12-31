@@ -400,7 +400,7 @@ export default function FarmGuardScanner({ onClose, isOfflineMode, modelType = '
     }
   }, [selectedCrop]);
 
-  // Run Lite Model prediction
+  // Run Lite Model prediction - Model outputs 2 classes: [healthy, diseased]
   const runLitePrediction = useCallback(async (imageElement) => {
     if (!model) return null;
 
@@ -408,24 +408,91 @@ export default function FarmGuardScanner({ onClose, isOfflineMode, modelType = '
       const startTime = performance.now();
       const inputTensor = preprocessImage(imageElement);
       const predictions = await model.predict(inputTensor).data();
+      inputTensor.dispose();
+      
       const endTime = performance.now();
       setInferenceTime(Math.round(endTime - startTime));
       
-      const maxIndex = predictions.indexOf(Math.max(...predictions));
-      const demoConfidence = 60 + Math.random() * 35;
-      const demoIndex = Math.floor(Math.random() * 3);
+      // Model outputs 2 classes: [healthy_probability, diseased_probability]
+      const healthyProb = predictions[0];
+      const diseasedProb = predictions[1];
+      const confidence = Math.max(healthyProb, diseasedProb) * 100;
       
-      const finalPrediction = {
-        class: LITE_DISEASE_CLASSES[demoIndex],
-        confidence: demoConfidence,
-        allPredictions: LITE_DISEASE_CLASSES.map((c, i) => ({
-          ...c,
-          probability: predictions[i] * 100 || Math.random() * 20
-        })).sort((a, b) => b.probability - a.probability)
-      };
+      console.log('Model predictions:', { healthyProb, diseasedProb, confidence });
       
-      inputTensor.dispose();
-      return finalPrediction;
+      if (healthyProb > diseasedProb) {
+        // Healthy prediction
+        return {
+          class: LITE_DISEASE_CLASSES[0], // Healthy class
+          confidence: confidence,
+          allPredictions: LITE_DISEASE_CLASSES.map((c, i) => ({
+            ...c,
+            probability: i === 0 ? confidence : Math.random() * 10
+          })).sort((a, b) => b.probability - a.probability)
+        };
+      } else {
+        // Disease detected - use visual analysis to determine which disease
+        const features = analyzeVisualFeatures(imageElement);
+        
+        // Score diseases based on visual features
+        const diseaseScores = LITE_DISEASE_CLASSES.slice(1).map((disease, idx) => {
+          let score = 0;
+          
+          // Match visual patterns to diseases
+          switch(disease.key) {
+            case 'earlyBlight':
+              score = (features.brownSpots * 80) + (features.yellowEdges * 40);
+              break;
+            case 'lateBlight':
+              score = (features.blackSpots * 90) + (features.waterSoaked * 70);
+              break;
+            case 'leafMold':
+              score = (features.whiteMold * 85) + (features.yellowEdges * 30);
+              break;
+            case 'septoriaLeafSpot':
+              score = (features.brownSpots * 70) + (features.blackSpots * 40);
+              break;
+            case 'spiderMites':
+              score = (features.yellowEdges * 60) + (features.wilting * 50);
+              break;
+            case 'targetSpot':
+              score = (features.brownSpots * 75) + (features.blackSpots * 35);
+              break;
+            case 'mosaicVirus':
+              score = (features.yellowEdges * 70) + (features.healthyGreen * 20);
+              break;
+            case 'yellowLeafCurl':
+              score = (features.yellowEdges * 90) + (features.wilting * 60);
+              break;
+            case 'bacterialSpot':
+              score = (features.blackSpots * 80) + (features.waterSoaked * 50);
+              break;
+            default:
+              score = Math.random() * 30;
+          }
+          
+          return { ...disease, score, idx: idx + 1 };
+        });
+        
+        // Sort by score and get best match
+        diseaseScores.sort((a, b) => b.score - a.score);
+        const bestMatch = diseaseScores[0];
+        
+        // Scale confidence based on model's diseased probability
+        const adjustedConfidence = Math.min(95, confidence * 0.8 + bestMatch.score * 0.2);
+        
+        return {
+          class: LITE_DISEASE_CLASSES[bestMatch.idx],
+          confidence: adjustedConfidence,
+          allPredictions: [
+            { ...LITE_DISEASE_CLASSES[0], probability: healthyProb * 100 },
+            ...diseaseScores.map(d => ({
+              ...LITE_DISEASE_CLASSES[d.idx],
+              probability: (diseasedProb * 100) * (d.score / (diseaseScores[0].score || 1))
+            }))
+          ].sort((a, b) => b.probability - a.probability)
+        };
+      }
       
     } catch (err) {
       console.error('Prediction error:', err);
